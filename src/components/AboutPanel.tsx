@@ -19,7 +19,15 @@ export function AboutPanel({ onClose }: AboutPanelProps) {
       </p>
 
       <p className="mb-3 text-xs leading-relaxed text-stone-400 dark:text-neutral-500">
-        Aquesta web és un prototip i té errors evidents. https://github.com/albertpuente/lletraferit
+        Versió Alpha - Segurament conté errors.
+      </p>
+
+      <p className="mb-3 text-xs leading-relaxed text-stone-400 dark:text-neutral-500">
+        Lletraferit és un projecte de codi obert: 
+        
+        <br/>
+
+        <a href="https://github.com/albertpuente/lletraferit" className="underline">GitHub - Albert Puente Encinas</a>.
       </p>
     </div>
   )

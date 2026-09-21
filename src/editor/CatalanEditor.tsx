@@ -57,7 +57,10 @@ function createBaseTheme(dark: boolean) {
       },
       '.cm-gutters': { border: 'none', backgroundColor: 'transparent' },
       '.cm-activeLineGutter': {
-        backgroundColor: dark ? 'rgba(190, 18, 60, 0.12)' : 'rgba(190, 18, 60, 0.06)',
+        backgroundColor: 'transparent',
+      },
+      '.cm-activeLine': {
+        backgroundColor: 'transparent',
       },
       '&.cm-focused': { outline: 'none' },
     },
@@ -142,7 +145,7 @@ export function CatalanEditor({
       onChange={onChange}
       extensions={extensions}
       theme="none"
-      basicSetup={{ lineNumbers: false, foldGutter: false, highlightActiveLine: false }}
+      basicSetup={{ lineNumbers: false, foldGutter: false, highlightActiveLine: true }}
       onCreateEditor={(view) => {
         viewRef.current = view
         view.dispatch({ effects: setVariant.of(variant) })
