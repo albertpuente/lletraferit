@@ -1,6 +1,5 @@
 # Lletraferit
 
-### 🔗 [**Obre l'aplicació: albertpuente.github.io/lletraferit**](https://albertpuente.github.io/lletraferit/)
 
 > **Lletraferit, -ida** *(adj., Catalan)* - literally "letter-wounded"; someone struck, smitten, or
 > afflicted by literature. A person hopelessly devoted to writing and the written word.
@@ -10,7 +9,7 @@ editor that also counts syllables per verse as you type, detects rhyme scheme, f
 words, and suggests synonyms - all computed locally in the browser, with no server, account, or
 network dependency once loaded.
 
-> *Una eina petita escrita amb intel·ligència artificial, per gaudir de l'escriptura sense ella.*
+### [**Open Lletraferit 🔗**](https://albertpuente.github.io/lletraferit/)
 
 ## Why
 

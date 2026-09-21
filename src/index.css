@@ -107,9 +107,22 @@ body.paper-texture {
   animation: cm-rhyme-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* A gentle, slow pulse drawing attention to the Structures button the
+   first time a user opens the app (see Toolbar.tsx), so they notice the
+   composition-help panel without it feeling like an alarming blink. */
+@keyframes soft-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.animate-soft-blink {
+  animation: soft-blink 1.6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .cm-typed,
-  .cm-metric-pop {
+  .cm-metric-pop,
+  .animate-soft-blink {
     animation: none;
   }
 }

@@ -1,4 +1,11 @@
+import { useEffect, useState } from 'react'
 import type { SaveStatus } from '../hooks/useDocument'
+
+// Shown once, briefly, so first-time users notice the composition-help
+// panel; dismissed permanently (via localStorage) as soon as it's been
+// seen, whether the user clicks it or just lets it time out.
+const STRUCTURES_HINT_KEY = 'lletraferit:seen-structures-hint'
+const STRUCTURES_HINT_DURATION_MS = 5000
 
 const STATUS_LABEL: Record<SaveStatus, string> = {
   idle: '',
@@ -37,6 +44,22 @@ export function Toolbar({
   onToggleStructures,
   onToggleAbout,
 }: ToolbarProps) {
+  const [showStructuresHint, setShowStructuresHint] = useState(
+    () => typeof window !== 'undefined' && !window.localStorage.getItem(STRUCTURES_HINT_KEY),
+  )
+
+  useEffect(() => {
+    if (!showStructuresHint) return
+    const timer = window.setTimeout(() => dismissStructuresHint(), STRUCTURES_HINT_DURATION_MS)
+    return () => window.clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showStructuresHint])
+
+  function dismissStructuresHint() {
+    setShowStructuresHint(false)
+    window.localStorage.setItem(STRUCTURES_HINT_KEY, '1')
+  }
+
   return (
     <header className="flex flex-wrap items-center gap-2 border-b border-stone-200 px-3 py-2 sm:gap-3 sm:px-4 sm:py-2.5 dark:border-neutral-800">
       <Logo />
@@ -79,7 +102,14 @@ export function Toolbar({
           )}
         </div>
 
-        <ToolbarIconButton onClick={onToggleStructures} title="Estructures de composició (ajuda)">
+        <ToolbarIconButton
+          onClick={() => {
+            if (showStructuresHint) dismissStructuresHint()
+            onToggleStructures()
+          }}
+          title="Estructures de composició (ajuda)"
+          className={showStructuresHint ? 'animate-soft-blink' : undefined}
+        >
           <BookIcon />
         </ToolbarIconButton>
 
@@ -129,14 +159,16 @@ function ToolbarIconButton({
   children,
   onClick,
   title,
+  className,
 }: {
   children: React.ReactNode
   onClick: () => void
   title: string
+  className?: string
 }) {
   return (
     <button
-      className="touch-manipulation rounded-md p-1.5 text-stone-600 hover:bg-stone-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
+      className={`touch-manipulation rounded-md p-1.5 text-stone-600 hover:bg-stone-100 dark:text-neutral-300 dark:hover:bg-neutral-800${className ? ` ${className}` : ''}`}
       onClick={onClick}
       onPointerDown={(e) => e.stopPropagation()}
       title={title}
