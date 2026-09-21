@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+/* Dark mode is toggled manually (via a `.dark` class on <html>, driven by
+   the app's theme setting) rather than only following OS preference. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: light;
+}
+
+:root.dark {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+html {
+  /* Use the dynamic viewport height on mobile so the layout accounts for
+     the browser's collapsing address bar/toolbar instead of leaving a gap
+     or forcing extra scroll. Falls back to 100% on browsers without dvh
+     support via the rule above. */
+  height: 100dvh;
+}
+
+body {
+  overflow-x: hidden;
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* A warm cream tone instead of pure white/gray gives the light theme a
+     cozier, paper-like feel; dark mode is unaffected. */
+  @apply bg-[#f6efe0] text-stone-900 dark:bg-neutral-950 dark:text-neutral-100;
+}
+
+/* Optional fine-grained paper texture (Settings > "Textura de paper"),
+   toggled via a `paper-texture` class on <body>. A tiled SVG noise filter,
+   layered under the theme background color, keeps it independent of
+   light/dark mode while still reading clearly as paper grain. */
+body.paper-texture {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='5' stitchTiles='stitch' result='noise'/%3E%3CfeColorMatrix in='noise' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+/* Rhyme markers: a bold colored letter shown next to the syllable count in
+   the gutter (cycled A, B, C, ...), matching the traditional rhyme-scheme
+   notation used in classified structures. */
+.rhyme-text-0 { @apply text-rose-500 dark:text-rose-400; }
+.rhyme-text-1 { @apply text-sky-500 dark:text-sky-400; }
+.rhyme-text-2 { @apply text-amber-500 dark:text-amber-400; }
+.rhyme-text-3 { @apply text-emerald-500 dark:text-emerald-400; }
+.rhyme-text-4 { @apply text-violet-500 dark:text-violet-400; }
+.rhyme-text-5 { @apply text-pink-500 dark:text-pink-400; }
+.rhyme-text-6 { @apply text-teal-500 dark:text-teal-400; }
+.rhyme-text-7 { @apply text-orange-500 dark:text-orange-400; }
+
+.unknown-word {
+  text-decoration: underline wavy;
+  text-decoration-color: theme('colors.red.500');
+  text-underline-offset: 3px;
+}
+
+/* Subtle fade-in applied to freshly-typed text, giving writing a gentle,
+   tactile feel without being distracting. */
+@keyframes cm-typed-fade-in {
+  from { opacity: 0.2; }
+  to { opacity: 1; }
+}
+
+.cm-typed {
+  animation: cm-typed-fade-in 240ms ease-out;
+}
+
+/* The syllable-count badge and rhyme letter are only recreated (by
+   CodeMirror's marker diffing) when their value actually changes, so
+   animating their creation naturally animates every metric or rhyme match
+   as it happens, without any extra bookkeeping. */
+@keyframes cm-badge-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* The pop animation only plays when the gutter's diffing logic (see
+   lineInfo.ts) determines a line's syllable count or rhyme letter genuinely
+   changed value — via the `cm-metric-pop` modifier class — rather than
+   whenever the badge is merely redrawn (e.g. because an earlier line was
+   inserted/removed and this one shifted position on screen). */
+.cm-syllable-count.cm-metric-pop {
+  animation: cm-badge-pop 260ms ease-out;
+}
+
+@keyframes cm-rhyme-pop {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.cm-rhyme-letter {
+  display: inline-block;
+}
+
+.cm-rhyme-letter.cm-metric-pop {
+  animation: cm-rhyme-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-typed,
+  .cm-metric-pop {
+    animation: none;
+  }
+}
