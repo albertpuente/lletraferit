@@ -1,11 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { SaveStatus } from '../hooks/useDocument'
 
-// Shown once, briefly, so first-time users notice the composition-help
-// panel; dismissed permanently (via localStorage) as soon as it's been
-// seen, whether the user clicks it or just lets it time out.
-const STRUCTURES_HINT_KEY = 'lletraferit:seen-structures-hint'
-const STRUCTURES_HINT_DURATION_MS = 5000
+const STRUCTURES_HINT_DELAY_MS = 1000
 
 const STATUS_LABEL: Record<SaveStatus, string> = {
   idle: '',
@@ -44,20 +40,22 @@ export function Toolbar({
   onToggleStructures,
   onToggleAbout,
 }: ToolbarProps) {
-  const [showStructuresHint, setShowStructuresHint] = useState(
-    () => typeof window !== 'undefined' && !window.localStorage.getItem(STRUCTURES_HINT_KEY),
-  )
+  // Draws attention to the Structures button with a crimson triple-blink
+  // shortly after the app loads, every time it's opened (not just the
+  // first time ever), so it stays useful as a recurring nudge rather than
+  // a one-off hint. Delayed so it doesn't fire before the page has settled.
+  const [structuresHintPending, setStructuresHintPending] = useState(true)
+  const [showStructuresHint, setShowStructuresHint] = useState(false)
 
   useEffect(() => {
-    if (!showStructuresHint) return
-    const timer = window.setTimeout(() => dismissStructuresHint(), STRUCTURES_HINT_DURATION_MS)
+    if (!structuresHintPending) return
+    const timer = window.setTimeout(() => setShowStructuresHint(true), STRUCTURES_HINT_DELAY_MS)
     return () => window.clearTimeout(timer)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showStructuresHint])
+  }, [structuresHintPending])
 
   function dismissStructuresHint() {
+    setStructuresHintPending(false)
     setShowStructuresHint(false)
-    window.localStorage.setItem(STRUCTURES_HINT_KEY, '1')
   }
 
   return (
@@ -104,11 +102,12 @@ export function Toolbar({
 
         <ToolbarIconButton
           onClick={() => {
-            if (showStructuresHint) dismissStructuresHint()
+            if (structuresHintPending) dismissStructuresHint()
             onToggleStructures()
           }}
           title="Estructures de composició (ajuda)"
-          className={showStructuresHint ? 'animate-soft-blink' : undefined}
+          className={showStructuresHint ? 'animate-structures-hint' : undefined}
+          onAnimationEnd={dismissStructuresHint}
         >
           <BookIcon />
         </ToolbarIconButton>
@@ -160,17 +159,20 @@ function ToolbarIconButton({
   onClick,
   title,
   className,
+  onAnimationEnd,
 }: {
   children: React.ReactNode
   onClick: () => void
   title: string
   className?: string
+  onAnimationEnd?: () => void
 }) {
   return (
     <button
       className={`touch-manipulation rounded-md p-1.5 text-stone-600 hover:bg-stone-100 dark:text-neutral-300 dark:hover:bg-neutral-800${className ? ` ${className}` : ''}`}
       onClick={onClick}
       onPointerDown={(e) => e.stopPropagation()}
+      onAnimationEnd={onAnimationEnd}
       title={title}
       aria-label={title}
     >

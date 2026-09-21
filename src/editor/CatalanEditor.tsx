@@ -14,11 +14,11 @@ import type { CatalanVariant } from '../engine/types'
 
 const SPELLCHECK_DEBOUNCE_MS = 400
 
-function createBaseTheme(dark: boolean) {
+function createBaseTheme(dark: boolean, fontSize: number) {
   return EditorView.theme(
     {
       '&': {
-        fontSize: '19px',
+        fontSize: `${fontSize}px`,
         backgroundColor: 'transparent',
         color: dark ? '#f5f5f5' : '#1c1917',
       },
@@ -74,6 +74,7 @@ export interface CatalanEditorProps {
   spellChecker: SpellChecker | null
   dark: boolean
   variant: CatalanVariant
+  fontSize: number
   ignoredWords: ReadonlySet<string>
   onWordClick: (info: WordClickInfo) => void
   onMetricsClick: (info: MetricsClickInfo) => void
@@ -90,6 +91,7 @@ export function CatalanEditor({
   spellChecker,
   dark,
   variant,
+  fontSize,
   ignoredWords,
   onWordClick,
   onMetricsClick,
@@ -100,14 +102,14 @@ export function CatalanEditor({
 
   const extensions = useMemo(
     () => [
-      createBaseTheme(dark),
+      createBaseTheme(dark, fontSize),
       syllableGutter(onMetricsClick),
       spellcheckDecoration,
       wordClickExtension(onWordClick),
       typingAnimation,
       EditorView.lineWrapping,
     ],
-    [dark, onWordClick, onMetricsClick],
+    [dark, fontSize, onWordClick, onMetricsClick],
   )
 
   useEffect(() => {

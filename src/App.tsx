@@ -171,6 +171,7 @@ function App() {
           spellChecker={settings.spellcheckEnabled ? spellChecker : null}
           dark={dark}
           variant={settings.variant}
+          fontSize={settings.fontSize}
           ignoredWords={ignoredWords}
           onWordClick={handleWordClick}
           onMetricsClick={handleMetricsClick}

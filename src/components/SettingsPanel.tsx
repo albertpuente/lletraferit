@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import type { AppSettings } from '../storage/db'
+import { FONT_SIZE_MAX, FONT_SIZE_MIN, FONT_SIZE_STEP, getDefaultFontSize } from '../storage/db'
 import type { CatalanVariant } from '../engine/types'
 import { useClickOutside } from '../hooks/useClickOutside'
 
@@ -12,6 +13,11 @@ export interface SettingsPanelProps {
 export function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProps) {
   const ref = useRef<HTMLDivElement>(null)
   useClickOutside(ref, onClose)
+
+  // Defensive fallback in case a corrupted value (e.g. a stray NaN) ever
+  // makes it into persisted settings, so the control never gets stuck.
+  const defaultFontSize = getDefaultFontSize()
+  const fontSize = Number.isFinite(settings.fontSize) ? settings.fontSize : defaultFontSize
 
   return (
     <div
@@ -52,6 +58,38 @@ export function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProp
           <option value="light">Clar</option>
           <option value="dark">Fosc</option>
         </select>
+      </label>
+
+      <label className="mb-3 block text-xs text-stone-500 dark:text-neutral-400">
+        Mida del text
+        <div className="mt-1 flex items-center gap-2">
+          <button
+            className="touch-manipulation rounded-md border border-stone-200 px-2.5 py-1 text-base text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+            onClick={() => onChange({ fontSize: Math.max(FONT_SIZE_MIN, fontSize - FONT_SIZE_STEP) })}
+            disabled={fontSize <= FONT_SIZE_MIN}
+            aria-label="Redueix la mida del text"
+          >
+            A−
+          </button>
+          <span className="min-w-[2.5em] text-center text-sm tabular-nums text-stone-600 dark:text-neutral-300">
+            {fontSize}px
+          </span>
+          <button
+            className="touch-manipulation rounded-md border border-stone-200 px-2.5 py-1 text-base text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+            onClick={() => onChange({ fontSize: Math.min(FONT_SIZE_MAX, fontSize + FONT_SIZE_STEP) })}
+            disabled={fontSize >= FONT_SIZE_MAX}
+            aria-label="Augmenta la mida del text"
+          >
+            A+
+          </button>
+          <button
+            className="touch-manipulation rounded-md px-2 py-1 text-xs text-stone-400 hover:text-stone-700 disabled:cursor-not-allowed disabled:opacity-40 dark:text-neutral-500 dark:hover:text-neutral-200"
+            onClick={() => onChange({ fontSize: defaultFontSize })}
+            disabled={fontSize === defaultFontSize}
+          >
+            Per defecte
+          </button>
+        </div>
       </label>
 
       <label className="mb-3 flex items-center justify-between text-xs text-stone-500 dark:text-neutral-400">

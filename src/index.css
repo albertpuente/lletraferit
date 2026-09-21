@@ -107,22 +107,23 @@ body.paper-texture {
   animation: cm-rhyme-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* A gentle, slow pulse drawing attention to the Structures button the
-   first time a user opens the app (see Toolbar.tsx), so they notice the
-   composition-help panel without it feeling like an alarming blink. */
-@keyframes soft-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+/* A clear, crimson triple-blink drawing attention to the Structures button
+   every time the app is opened (see Toolbar.tsx), so it stays a useful
+   recurring nudge toward the composition-help panel. Runs three times then
+   stops automatically (`onAnimationEnd` in Toolbar.tsx removes the class). */
+@keyframes structures-hint {
+  0%, 100% { color: inherit; }
+  25%, 75% { color: #be123c; }
 }
 
-.animate-soft-blink {
-  animation: soft-blink 1.6s ease-in-out infinite;
+.animate-structures-hint {
+  animation: structures-hint 0.7s ease-in-out 3;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .cm-typed,
   .cm-metric-pop,
-  .animate-soft-blink {
+  .animate-structures-hint {
     animation: none;
   }
 }
