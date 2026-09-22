@@ -29,7 +29,7 @@ export function MetricsPopup({ x, y, syllableExplanation, rhymeExplanation, onCl
   return (
     <div
       ref={ref}
-      className="fixed z-20 max-h-72 w-72 max-w-[calc(100vw-1rem)] overflow-auto rounded-lg border border-stone-200 bg-[#f6efe0] p-3 text-sm shadow-lg dark:border-neutral-800 dark:bg-neutral-900"
+      className="fixed z-20 max-h-72 w-72 max-w-[calc(100vw-1rem)] overflow-auto rounded-lg border border-stone-200 bg-[#f8f5ee] p-3 text-sm shadow-lg dark:border-neutral-800 dark:bg-neutral-900"
       style={{ left: x, top: y }}
     >
       {syllableExplanation && (

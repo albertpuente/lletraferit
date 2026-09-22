@@ -1,7 +1,7 @@
 import { GutterMarker, gutter } from '@codemirror/view'
 import { StateEffect, StateField } from '@codemirror/state'
-import type { Extension, Transaction } from '@codemirror/state'
-import { analyzeDocument, lineInfoEquals } from '../analysis'
+import type { Extension } from '@codemirror/state'
+import { analyzeDocument } from '../analysis'
 import type { LineInfo } from '../analysis'
 import type { CatalanVariant } from '../../engine/types'
 
@@ -10,25 +10,27 @@ export const setVariant = StateEffect.define<CatalanVariant>()
 export interface MetricsClickInfo {
   syllableExplanation: string
   rhymeExplanation: string
-  clientX: number
-  clientY: number
+  /** Rhyme group of the clicked verse, so its rhyming syllables (and those
+   * of other verses sharing the group) can be highlighted. */
+  rhymeGroupIndex: number | null
+  /** 0-based line index of the clicked verse, so its metrical syllables can
+   * be shown as curves while the popup is open. */
+  lineIndex: number
+  /** Viewport bounds of the clicked line, used to position the popup so it
+   * never covers the verse it describes. */
+  lineLeft: number
+  lineTop: number
+  lineBottom: number
 }
 
 interface LineInfoState {
   variant: CatalanVariant
   infos: LineInfo[]
-  /** 0-based new-document line indices whose displayed metrics genuinely
-   * changed as a result of the most recent edit (as opposed to lines that
-   * merely shifted up/down on screen because a line was inserted/removed
-   * elsewhere). Only these lines get the "just changed" pop animation. */
-  changedLines: ReadonlySet<number>
 }
-
-const NO_CHANGES: ReadonlySet<number> = new Set()
 
 export const lineInfoField = StateField.define<LineInfoState>({
   create(state) {
-    return { variant: 'central', infos: analyzeDocument(state.doc.toString(), 'central'), changedLines: NO_CHANGES }
+    return { variant: 'central', infos: analyzeDocument(state.doc.toString(), 'central') }
   },
   update(value, tr) {
     let variant = value.variant
@@ -37,43 +39,9 @@ export const lineInfoField = StateField.define<LineInfoState>({
     }
     if (!tr.docChanged && variant === value.variant) return value
 
-    const newInfos = analyzeDocument(tr.state.doc.toString(), variant)
-    // Only compute (and thus animate) changed lines for actual keyboard
-    // typing/pasting — programmatic edits (inserting a chosen synonym,
-    // opening/loading a document, switching variant, etc.) should update the
-    // gutter's numbers/letters instantly without the pop animation.
-    const isTypingEvent = tr.isUserEvent('input.type') || tr.isUserEvent('input.paste')
-    const changedLines = tr.docChanged && isTypingEvent ? computeChangedLines(value.infos, newInfos, tr) : NO_CHANGES
-    return { variant, infos: newInfos, changedLines }
+    return { variant, infos: analyzeDocument(tr.state.doc.toString(), variant) }
   },
 })
-
-/** Diffs old vs. new per-line analysis, mapping each old line's position
- * through the transaction's changes to find where its content ended up in
- * the new document. This correctly distinguishes "this line's metrics
- * actually changed" from "this line moved because a line was inserted or
- * removed above it", which a naive same-index comparison cannot do. */
-function computeChangedLines(oldInfos: LineInfo[], newInfos: LineInfo[], tr: Transaction): ReadonlySet<number> {
-  const changed = new Set<number>()
-  const matchedNewIndices = new Set<number>()
-  const oldDoc = tr.startState.doc
-
-  for (let oldIdx = 0; oldIdx < oldInfos.length; oldIdx++) {
-    if (oldIdx >= oldDoc.lines) break
-    const oldLineFrom = oldDoc.line(oldIdx + 1).from
-    const mappedPos = tr.changes.mapPos(oldLineFrom, 1)
-    const newIdx = tr.state.doc.lineAt(mappedPos).number - 1
-    if (newIdx < 0 || newIdx >= newInfos.length) continue
-    matchedNewIndices.add(newIdx)
-    if (!lineInfoEquals(oldInfos[oldIdx], newInfos[newIdx])) changed.add(newIdx)
-  }
-
-  for (let newIdx = 0; newIdx < newInfos.length; newIdx++) {
-    if (!matchedNewIndices.has(newIdx)) changed.add(newIdx)
-  }
-
-  return changed
-}
 
 class SyllableMarker extends GutterMarker {
   readonly count: number
@@ -81,7 +49,6 @@ class SyllableMarker extends GutterMarker {
   readonly rhymeGroupIndex: number | null
   readonly syllableExplanation: string
   readonly rhymeExplanation: string
-  readonly changed: boolean
 
   constructor(
     count: number,
@@ -89,7 +56,6 @@ class SyllableMarker extends GutterMarker {
     rhymeGroupIndex: number | null,
     syllableExplanation: string,
     rhymeExplanation: string,
-    changed: boolean,
   ) {
     super()
     this.count = count
@@ -97,7 +63,6 @@ class SyllableMarker extends GutterMarker {
     this.rhymeGroupIndex = rhymeGroupIndex
     this.syllableExplanation = syllableExplanation
     this.rhymeExplanation = rhymeExplanation
-    this.changed = changed
   }
 
   eq(other: SyllableMarker) {
@@ -106,8 +71,7 @@ class SyllableMarker extends GutterMarker {
       other.rhymeLabel === this.rhymeLabel &&
       other.rhymeGroupIndex === this.rhymeGroupIndex &&
       other.syllableExplanation === this.syllableExplanation &&
-      other.rhymeExplanation === this.rhymeExplanation &&
-      other.changed === this.changed
+      other.rhymeExplanation === this.rhymeExplanation
     )
   }
 
@@ -116,14 +80,13 @@ class SyllableMarker extends GutterMarker {
     wrapper.className = 'cm-syllable-badge'
 
     const countSpan = document.createElement('span')
-    countSpan.className = this.changed ? 'cm-syllable-count cm-metric-pop' : 'cm-syllable-count'
+    countSpan.className = 'cm-syllable-count'
     countSpan.textContent = this.count > 0 ? String(this.count) : ''
     wrapper.appendChild(countSpan)
 
     if (this.rhymeLabel) {
       const letterSpan = document.createElement('span')
-      const base = `cm-rhyme-letter rhyme-text-${(this.rhymeGroupIndex ?? 0) % 8}`
-      letterSpan.className = this.changed ? `${base} cm-metric-pop` : base
+      letterSpan.className = `cm-rhyme-letter rhyme-text-${(this.rhymeGroupIndex ?? 0) % 8}`
       letterSpan.textContent = this.rhymeLabel
       wrapper.appendChild(letterSpan)
     }
@@ -143,7 +106,7 @@ export function syllableGutter(onClick: (info: MetricsClickInfo) => void): Exten
       class: 'cm-syllable-gutter',
       lineMarker(view, line) {
         const lineNumber = view.state.doc.lineAt(line.from).number - 1
-        const { infos, changedLines } = view.state.field(lineInfoField)
+        const { infos } = view.state.field(lineInfoField)
         const info = infos[lineNumber]
         if (!info) return null
         return new SyllableMarker(
@@ -152,21 +115,24 @@ export function syllableGutter(onClick: (info: MetricsClickInfo) => void): Exten
           info.rhyme.groupIndex,
           info.syllableExplanation,
           info.rhymeExplanation,
-          changedLines.has(lineNumber),
         )
       },
-      initialSpacer: () => new SyllableMarker(0, '', null, '', '', false),
+      initialSpacer: () => new SyllableMarker(0, '', null, '', ''),
       domEventHandlers: {
-        click(view, line, event) {
+        click(view, line) {
           const lineNumber = view.state.doc.lineAt(line.from).number - 1
           const info = view.state.field(lineInfoField).infos[lineNumber]
           if (!info || (!info.syllableExplanation && !info.rhymeExplanation)) return false
-          const mouseEvent = event as MouseEvent
+          const lineRect = view.coordsAtPos(line.from)
+          if (!lineRect) return false
           onClick({
             syllableExplanation: info.syllableExplanation,
             rhymeExplanation: info.rhymeExplanation,
-            clientX: mouseEvent.clientX,
-            clientY: mouseEvent.clientY,
+            rhymeGroupIndex: info.rhyme.groupIndex,
+            lineIndex: lineNumber,
+            lineLeft: lineRect.left,
+            lineTop: lineRect.top,
+            lineBottom: lineRect.bottom,
           })
           return true
         },

@@ -40,6 +40,15 @@ export interface VerseAnalysis {
   rhymeKey: RhymeKey | null
   /** Stress classification of the verse ending (masculina=aguda, femenina=plana, esdrúixola). */
   endingType: StressType | null
+  /** Character range (within `text`) of the rhyming tail of the last word, or
+   * null if the verse has no words. Used to highlight the rhyming syllable(s)
+   * in the editor. */
+  rhymeRange: { from: number; to: number } | null
+  /** Character ranges (within `text`) of every syllable counted toward
+   * `syllableCount`, in order. A sinalefa boundary merges the two fused
+   * syllables into one continuous range spanning both words; the last
+   * word's uncounted trailing unstressed syllables are omitted. */
+  metricalSyllables: { from: number; to: number }[]
 }
 
 export interface RhymeSchemeEntry {

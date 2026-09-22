@@ -8,6 +8,8 @@ import { spellcheckDecoration, setUnknownWords } from './extensions/spellcheckDe
 import { wordClickExtension } from './extensions/wordClick'
 import type { WordClickInfo } from './extensions/wordClick'
 import { typingAnimation } from './extensions/typingAnimation'
+import { rhymeHighlight, setHighlightedRhymeGroup } from './extensions/rhymeHighlight'
+import { syllableCurves, setSyllableCurvesLine } from './extensions/syllableCurves'
 import { findWordTokens } from './tokenize'
 import type { SpellChecker } from '../spellcheck/client'
 import type { CatalanVariant } from '../engine/types'
@@ -29,11 +31,22 @@ function createBaseTheme(dark: boolean, fontSize: number) {
         caretColor: dark ? '#f5f5f5' : '#1c1917',
       },
       '.cm-scroller': { overflow: 'auto' },
+      '.cm-gutters': {
+        border: 'none',
+        backgroundColor: 'transparent',
+      },
       '.cm-syllable-gutter': {
-        minWidth: '3.4em',
+        minWidth: '2.2em',
         textAlign: 'left',
         color: 'inherit',
         userSelect: 'none',
+      },
+      '.cm-syllable-gutter .cm-gutterElement': {
+        // Each gutter row is sized by CodeMirror to match its verse's full
+        // line height; center the (smaller-font) badge within that row so
+        // it lines up with the text instead of hugging the row's top edge.
+        display: 'flex',
+        alignItems: 'center',
       },
       '.cm-syllable-badge': {
         display: 'inline-grid',
@@ -55,12 +68,17 @@ function createBaseTheme(dark: boolean, fontSize: number) {
         fontWeight: 600,
         cursor: 'pointer',
       },
-      '.cm-gutters': { border: 'none', backgroundColor: 'transparent' },
       '.cm-activeLineGutter': {
         backgroundColor: 'transparent',
       },
       '.cm-activeLine': {
         backgroundColor: 'transparent',
+      },
+      '.cm-syllable-curve': {
+        borderBottom: '2px solid currentColor',
+        borderRadius: '0 0 60% 60% / 0 0 45% 45%',
+        opacity: 0.5,
+        paddingBottom: '3px',
       },
       '&.cm-focused': { outline: 'none' },
     },
@@ -78,6 +96,12 @@ export interface CatalanEditorProps {
   ignoredWords: ReadonlySet<string>
   onWordClick: (info: WordClickInfo) => void
   onMetricsClick: (info: MetricsClickInfo) => void
+  /** Rhyme group whose syllables should be highlighted across all verses, or
+   * null to clear the highlight (e.g. when the metrics popup closes). */
+  highlightedRhymeGroup: number | null
+  /** 0-based line whose metrical syllables should be underlined with curves,
+   * or null to clear them (e.g. when the metrics popup closes). */
+  activeMetricsLine: number | null
   handleRef?: MutableRefObject<CatalanEditorHandle | null>
 }
 
@@ -95,6 +119,8 @@ export function CatalanEditor({
   ignoredWords,
   onWordClick,
   onMetricsClick,
+  highlightedRhymeGroup,
+  activeMetricsLine,
   handleRef,
 }: CatalanEditorProps) {
   const viewRef = useRef<EditorView | null>(null)
@@ -104,6 +130,8 @@ export function CatalanEditor({
     () => [
       createBaseTheme(dark, fontSize),
       syllableGutter(onMetricsClick),
+      rhymeHighlight,
+      syllableCurves,
       spellcheckDecoration,
       wordClickExtension(onWordClick),
       typingAnimation,
@@ -115,6 +143,14 @@ export function CatalanEditor({
   useEffect(() => {
     viewRef.current?.dispatch({ effects: setVariant.of(variant) })
   }, [variant])
+
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: setHighlightedRhymeGroup.of(highlightedRhymeGroup) })
+  }, [highlightedRhymeGroup])
+
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: setSyllableCurvesLine.of(activeMetricsLine) })
+  }, [activeMetricsLine])
 
   useEffect(() => {
     if (!spellChecker) {

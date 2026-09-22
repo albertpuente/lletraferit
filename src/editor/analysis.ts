@@ -20,6 +20,13 @@ export interface LineInfo {
   rhyme: RhymeSchemeEntry
   syllableExplanation: string
   rhymeExplanation: string
+  /** Character range (within the line) of the rhyming tail, or null if the
+   * line has no words. Used to highlight the rhyming syllable(s) across
+   * verses that share a rhyme group. */
+  rhymeRange: { from: number; to: number } | null
+  /** Character ranges (within the line) of every syllable counted toward
+   * `syllableCount`, sinalefa-fused syllables merged into one range. */
+  metricalSyllables: { from: number; to: number }[]
 }
 
 const EMPTY_RHYME: RhymeSchemeEntry = { groupIndex: null, label: '' }
@@ -43,6 +50,8 @@ export function analyzeDocument(text: string, variant: CatalanVariant = 'central
         rhyme,
         syllableExplanation: explainSyllableCount(verse),
         rhymeExplanation: explainRhyme(rhyme),
+        rhymeRange: verse.rhymeRange,
+        metricalSyllables: verse.metricalSyllables,
       }
     })
     stanzaLineIndices = []
@@ -51,7 +60,14 @@ export function analyzeDocument(text: string, variant: CatalanVariant = 'central
   lines.forEach((line, i) => {
     if (line.trim() === '') {
       flushStanza()
-      result[i] = { syllableCount: 0, rhyme: EMPTY_RHYME, syllableExplanation: '', rhymeExplanation: '' }
+      result[i] = {
+        syllableCount: 0,
+        rhyme: EMPTY_RHYME,
+        syllableExplanation: '',
+        rhymeExplanation: '',
+        rhymeRange: null,
+        metricalSyllables: [],
+      }
       return
     }
     stanzaLineIndices.push(i)

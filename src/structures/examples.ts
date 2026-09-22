@@ -49,4 +49,26 @@ que em fa sofrir!
 Estic malalt, mes ai! tornau-me a terra,
 que hi vull morir!`,
   },
+  {
+    id: 'sonet13',
+    title: 'Sonet número 13',
+    attribution: 'Mercè Rodoreda',
+    content: `Boques de rosa i vori on dues serps lascives
+continuen eternes el dolç combat d'amor,
+castament devoreu les vostres flors, salives
+més pàl·lides que els astres. Aquest diví licor,
+
+fresc com la mel antiga, beveu, tristos amants,
+adorables cadàvers que un sol desig confina.
+Déu us pasta de fang i refeu amb les mans
+de vostres flancs reials la corba que s'afina.
+
+Retuts per la fatiga dormiu junts en la pau;
+la rosada que irisa un cel amarg i blau
+desfà les seves perles en la claror daurada.
+
+Pròdigs de somnis verges no us desvetlleu mai més,
+la dea de l'oblit, damunt vostre vinclada,
+gelosament us sotja i us pren el darrer bes.`,
+  },
 ]

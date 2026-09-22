@@ -33,7 +33,7 @@ body {
     ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   /* A warm cream tone instead of pure white/gray gives the light theme a
      cozier, paper-like feel; dark mode is unaffected. */
-  @apply bg-[#f6efe0] text-stone-900 dark:bg-neutral-950 dark:text-neutral-100;
+  @apply bg-[#f8f5ee] text-stone-900 dark:bg-neutral-950 dark:text-neutral-100;
 }
 
 /* Optional fine-grained paper texture (Settings > "Textura de paper"),
@@ -41,7 +41,7 @@ body {
    layered under the theme background color, keeps it independent of
    light/dark mode while still reading clearly as paper grain. */
 body.paper-texture {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='5' stitchTiles='stitch' result='noise'/%3E%3CfeColorMatrix in='noise' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='5' stitchTiles='stitch' result='noise'/%3E%3CfeColorMatrix in='noise' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)'/%3E%3C/svg%3E");
   background-repeat: repeat;
 }
 
@@ -57,6 +57,21 @@ body.paper-texture {
 .rhyme-text-6 { @apply text-teal-500 dark:text-teal-400; }
 .rhyme-text-7 { @apply text-orange-500 dark:text-orange-400; }
 
+/* Background highlight applied to the rhyming syllables of every verse that
+ * shares the currently-selected rhyme group (see rhymeHighlight.ts),
+ * matching the letter's color from `.rhyme-text-N` above. */
+.cm-rhyme-highlight {
+  border-radius: 3px;
+}
+.rhyme-bg-0 { @apply bg-rose-500/25 dark:bg-rose-400/25; }
+.rhyme-bg-1 { @apply bg-sky-500/25 dark:bg-sky-400/25; }
+.rhyme-bg-2 { @apply bg-amber-500/25 dark:bg-amber-400/25; }
+.rhyme-bg-3 { @apply bg-emerald-500/25 dark:bg-emerald-400/25; }
+.rhyme-bg-4 { @apply bg-violet-500/25 dark:bg-violet-400/25; }
+.rhyme-bg-5 { @apply bg-pink-500/25 dark:bg-pink-400/25; }
+.rhyme-bg-6 { @apply bg-teal-500/25 dark:bg-teal-400/25; }
+.rhyme-bg-7 { @apply bg-orange-500/25 dark:bg-orange-400/25; }
+
 .unknown-word {
   text-decoration: underline wavy;
   text-decoration-color: theme('colors.red.500');
@@ -64,7 +79,7 @@ body.paper-texture {
 }
 
 /* Subtle fade-in applied to freshly-typed text, giving writing a gentle,
-   tactile feel without being distracting. */
+ * tactile feel without being distracting. */
 @keyframes cm-typed-fade-in {
   from { opacity: 0.2; }
   to { opacity: 1; }
@@ -74,43 +89,14 @@ body.paper-texture {
   animation: cm-typed-fade-in 240ms ease-out;
 }
 
-/* The syllable-count badge and rhyme letter are only recreated (by
-   CodeMirror's marker diffing) when their value actually changes, so
-   animating their creation naturally animates every metric or rhyme match
-   as it happens, without any extra bookkeeping. */
-@keyframes cm-badge-pop {
-  0% { transform: scale(0.6); opacity: 0; }
-  60% { transform: scale(1.15); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-/* The pop animation only plays when the gutter's diffing logic (see
-   lineInfo.ts) determines a line's syllable count or rhyme letter genuinely
-   changed value — via the `cm-metric-pop` modifier class — rather than
-   whenever the badge is merely redrawn (e.g. because an earlier line was
-   inserted/removed and this one shifted position on screen). */
-.cm-syllable-count.cm-metric-pop {
-  animation: cm-badge-pop 260ms ease-out;
-}
-
-@keyframes cm-rhyme-pop {
-  0% { transform: scale(0); opacity: 0; }
-  70% { transform: scale(1.3); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
 .cm-rhyme-letter {
   display: inline-block;
 }
 
-.cm-rhyme-letter.cm-metric-pop {
-  animation: cm-rhyme-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
 /* A clear, crimson triple-blink drawing attention to the Structures button
-   every time the app is opened (see Toolbar.tsx), so it stays a useful
-   recurring nudge toward the composition-help panel. Runs three times then
-   stops automatically (`onAnimationEnd` in Toolbar.tsx removes the class). */
+ * every time the app is opened (see Toolbar.tsx), so it stays a useful
+ * recurring nudge toward the composition-help panel. Runs three times then
+ * stops automatically (`onAnimationEnd` in Toolbar.tsx removes the class). */
 @keyframes structures-hint {
   0%, 100% { color: inherit; }
   25%, 75% { color: #be123c; }
@@ -122,7 +108,6 @@ body.paper-texture {
 
 @media (prefers-reduced-motion: reduce) {
   .cm-typed,
-  .cm-metric-pop,
   .animate-structures-hint {
     animation: none;
   }

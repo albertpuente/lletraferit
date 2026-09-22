@@ -29,7 +29,7 @@ export function StructuresPanel({ onClose, onLoadExample }: StructuresPanelProps
   return (
     <div
       ref={ref}
-      className="absolute right-2 left-2 top-14 z-10 max-h-[75vh] overflow-auto rounded-lg border border-stone-200 bg-[#f6efe0] p-4 shadow-lg sm:left-auto sm:right-4 sm:w-96 dark:border-neutral-800 dark:bg-neutral-900"
+      className="absolute right-2 left-2 top-14 z-10 max-h-[75vh] overflow-auto rounded-lg border border-stone-200 bg-[#f8f5ee] p-4 shadow-lg sm:left-auto sm:right-4 sm:w-96 dark:border-neutral-800 dark:bg-neutral-900"
     >
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-medium text-stone-900 dark:text-neutral-100">Estructures</h2>

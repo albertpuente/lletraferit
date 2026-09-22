@@ -16,7 +16,7 @@ import { usePaperTexture } from './hooks/usePaperTexture'
 import { SpellChecker } from './spellcheck/client'
 import { getSynonyms, preloadSynonyms } from './synonyms/client'
 import type { SynonymResult } from './synonyms/client'
-import { clampPopupPosition } from './utils/popupPosition'
+import { clampPopupPosition, positionPopupNearLine } from './utils/popupPosition'
 
 const SYNONYMS_POPUP_SIZE = { width: 256, height: 288 }
 const METRICS_POPUP_SIZE = { width: 288, height: 288 }
@@ -38,6 +38,8 @@ interface MetricsPopupState {
   y: number
   syllableExplanation: string
   rhymeExplanation: string
+  rhymeGroupIndex: number | null
+  lineIndex: number
 }
 
 function App() {
@@ -71,12 +73,20 @@ function App() {
   }
 
   function handleMetricsClick(info: MetricsClickInfo) {
-    const { x, y } = clampPopupPosition(info.clientX, info.clientY, METRICS_POPUP_SIZE.width, METRICS_POPUP_SIZE.height)
+    const { x, y } = positionPopupNearLine(
+      info.lineLeft,
+      info.lineTop,
+      info.lineBottom,
+      METRICS_POPUP_SIZE.width,
+      METRICS_POPUP_SIZE.height,
+    )
     setMetricsPopup({
       x,
       y,
       syllableExplanation: info.syllableExplanation,
       rhymeExplanation: info.rhymeExplanation,
+      rhymeGroupIndex: info.rhymeGroupIndex,
+      lineIndex: info.lineIndex,
     })
   }
 
@@ -175,6 +185,8 @@ function App() {
           ignoredWords={ignoredWords}
           onWordClick={handleWordClick}
           onMetricsClick={handleMetricsClick}
+          highlightedRhymeGroup={metricsPopup?.rhymeGroupIndex ?? null}
+          activeMetricsLine={metricsPopup?.lineIndex ?? null}
           handleRef={editorHandleRef}
         />
       </main>

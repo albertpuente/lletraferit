@@ -18,6 +18,14 @@ describe('analyzeVerse', () => {
     expect(verse.sinalefaCount).toBe(1)
   })
 
+  it('does not chain a sinalefa across three consecutive vowel-contact words (matching the standard "no hi ha pa" -> no-ja-pa example)', () => {
+    // "hi" fuses with "ha" (both atonic), which consumes "hi"; "no"/"Andreu"
+    // do not also fuse into the same chain even though they end in a vowel
+    // right before "hi".
+    expect(analyzeVerse('no hi ha pa').syllableCount).toBe(3)
+    expect(analyzeVerse('A Sant Andreu hi ha molta gent').syllableCount).toBe(8)
+  })
+
   it('truncates the count at the last word\'s stressed syllable when it ends plana', () => {
     // "el gran arbre" -> el(1) + gran(1) + arbre(2 syllables, but stressed on "ar",
     // trailing "bre" unstressed does not count) = 1+1+2 raw - 0 sinalefa - 1 trailing = 3

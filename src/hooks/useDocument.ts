@@ -52,23 +52,36 @@ export function useDocument() {
   const persist = useCallback(async (docId: string, docName: string, docContent: string) => {
     setStatus('saving')
     try {
-      await upsertDocument({
-        id: docId,
-        name: docName,
-        content: docContent,
-        updatedAt: Date.now(),
-        fileHandle: fileHandleRef.current,
-      })
-      await saveSettings({ lastDocId: docId })
-
       if (fileHandleRef.current) {
         const granted = await verifyPermission(fileHandleRef.current)
         if (!granted) {
           setStatus('needs-permission')
           return
         }
+        // Write the actual file first: this is the part the user cares
+        // about, and it must not be skipped just because the IndexedDB
+        // bookkeeping below (which also tries to persist the handle
+        // itself, for restoring the file link on next launch) fails.
         await writeToHandle(fileHandleRef.current, docContent)
       }
+
+      try {
+        await upsertDocument({
+          id: docId,
+          name: docName,
+          content: docContent,
+          updatedAt: Date.now(),
+          fileHandle: fileHandleRef.current,
+        })
+      } catch {
+        // Some browsers can't structured-clone a FileSystemFileHandle into
+        // IndexedDB. The real file above is already saved either way, so
+        // just drop the handle from this record instead of failing the
+        // whole save — the document just won't auto-relink to its file on
+        // next launch.
+        await upsertDocument({ id: docId, name: docName, content: docContent, updatedAt: Date.now() })
+      }
+      await saveSettings({ lastDocId: docId })
 
       setStatus('saved')
     } catch (error) {

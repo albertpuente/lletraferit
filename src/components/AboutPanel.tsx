@@ -12,7 +12,7 @@ export function AboutPanel({ onClose }: AboutPanelProps) {
   return (
     <div
       ref={ref}
-      className="absolute right-2 left-2 top-14 z-10 max-h-[80vh] overflow-auto rounded-lg border border-stone-200 bg-[#f6efe0] p-4 shadow-lg sm:left-auto sm:right-4 sm:w-80 dark:border-neutral-800 dark:bg-neutral-900"
+      className="absolute right-2 left-2 top-14 z-10 max-h-[80vh] overflow-auto rounded-lg border border-stone-200 bg-[#f8f5ee] p-4 shadow-lg sm:left-auto sm:right-4 sm:w-80 dark:border-neutral-800 dark:bg-neutral-900"
     >
       <p className="mb-3 font-serif text-base italic leading-relaxed text-stone-700 dark:text-neutral-300">
         Una eina petita escrita amb IA, per gaudir de l'escriptura sense ella.
