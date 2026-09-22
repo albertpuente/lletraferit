@@ -36,6 +36,18 @@ export function AboutPanel({ onClose }: AboutPanelProps) {
       </p>
 
       <p className="text-xs leading-relaxed text-stone-400 dark:text-neutral-500">
+        Llicència:{' '}
+        <a
+          href="https://github.com/albertpuente/lletraferit/blob/main/LICENSE"
+          className="underline hover:text-stone-600 dark:hover:text-neutral-300"
+          target="_blank"
+          rel="noreferrer"
+        >
+          GPL-3.0-or-later
+        </a>
+      </p>
+
+      <p className="text-xs leading-relaxed text-stone-400 dark:text-neutral-500">
         Versió Alpha - Segurament conté errors.
       </p>
     </div>

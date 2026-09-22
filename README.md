@@ -1,22 +1,34 @@
 # Lletraferit
 
+[![CI/CD](https://github.com/albertpuente/lletraferit/actions/workflows/deploy.yml/badge.svg)](https://github.com/albertpuente/lletraferit/actions/workflows/deploy.yml)
+[![Tests](https://github.com/albertpuente/lletraferit/actions/workflows/tests.yml/badge.svg)](https://github.com/albertpuente/lletraferit/actions/workflows/tests.yml)
+[![Code style: oxlint](https://img.shields.io/badge/code%20style-oxlint-4D7CFE?logo=oxlint&logoColor=white)](https://oxc.rs/docs/guide/usage/linter.html)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](LICENSE)
+
 <img src="docs/screenshot.png" alt="Lletraferit editor screenshot" align="right" width="360">
+
+A small, client-only web app for writing poetry in Catalan. 
 
 > **Lletraferit, -ida** *(adj., Catalan)* - literally "letter-wounded"; someone struck, smitten, or
 > afflicted by literature. A person hopelessly devoted to writing and the written word.
 
-**Lletraferit** is a small, client-only web app for writing poetry in Catalan. It's a plain text
-editor that also counts syllables per verse as you type, detects rhyme scheme, flags misspelled
-words, and suggests synonyms - all computed locally in the browser, with no server, account, or
-network dependency once loaded.
-
 ### [**Open Lletraferit 🔗**](https://albertpuente.github.io/lletraferit/)
 
-## Why
+It's a plain text
+editor that also counts syllables per verse as you type, detects rhyme scheme, flags misspelled
+words, and suggests synonyms. All computed locally in the browser, with no server, account, or
+network dependency once loaded.
 
-Writing metrical, rhymed poetry means constantly counting syllables on your fingers and holding an
-internal rhyme dictionary in your head. This app externalizes that bookkeeping so you can focus on
-the words, while still leaving every creative decision to you.
+**Table of contents:**
+- [Features](#features)
+- [Architecture](#architecture)
+- [License](#license)
+- [Getting started](#getting-started)
+- [Deployment](#deployment)
+
+<br clear="right">
 
 ## Features
 
@@ -74,6 +86,12 @@ against real published poems (not formally verified against a reference corpus).
   (CC-BY 4.0), compiled into `public/dictionaries/synonyms.json` via `npm run build:synonyms`
   (not run automatically since it requires network access - see below).
 
+## License
+
+Copyright © 2026 Albert Puente Encinas. Lletraferit is licensed under the
+[GNU General Public License v3.0 or later](LICENSE). Bundled dictionaries and
+synonym data remain subject to their respective licenses.
+
 ## Getting started
 
 ```sh
@@ -91,12 +109,3 @@ Pushes to `main` automatically build and deploy the app to GitHub Pages via
 dependencies, regenerates the synonyms dictionary, runs the test suite, builds the site
 (`vite build`, with `base: '/lletraferit/'` for this project-site path), and publishes
 `dist/` — no server or hosting configuration to maintain beyond that.
-
-## ⚠️ A note on how this was built
-
-This project was built almost entirely through AI-assisted ("vibe") coding. It works, it's tested
-where it counts (the metrics engine has a real unit test suite, cross-checked against a couple of
-published poems), and it's had several rounds of bug fixes - but treat it accordingly: **assume
-there are still rough edges, inconsistencies, or outright mistakes you haven't found yet.** If a
-syllable count or rhyme looks wrong, it might well be - please don't take it as gospel, and feel
-free to open an issue (or fix it) if you spot something off.
