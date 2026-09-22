@@ -16,10 +16,9 @@ A small, client-only web app for writing poetry in Catalan.
 
 ### [**Open Lletraferit 🔗**](https://albertpuente.github.io/lletraferit/)
 
-It's a plain text
-editor that also counts syllables per verse as you type, detects rhyme scheme, flags misspelled
-words, and suggests synonyms. All computed locally in the browser, with no server, account, or
-network dependency once loaded.
+It's a plain-text editor that counts syllables per verse as you type, detects rhyme schemes, flags
+misspelled words, and suggests synonyms. Analysis and document handling run locally in the browser:
+there is no server or account.
 
 **Table of contents:**
 - [Features](#features)
@@ -35,24 +34,29 @@ network dependency once loaded.
 - **Live syllable count** - a per-line gutter shows the metrical syllable count for each verse,
   applying Catalan rules for sinalefa (vowel fusion across word boundaries) and the
   "count-to-the-last-stress" convention (aguda/plana/esdrúixola endings). A dièresi (ï/ü) can be
-  used to force a hiatus where the automatic analysis would assume a diphthong or sinalefa.
+  used to force a hiatus where the automatic analysis would assume a diphthong or sinalefa. The
+  contributing syllables can also be shown as curves below the verse.
 - **Rhyme scheme detection** - verses are grouped by matching phonetic endings (from the stressed
   vowel onward) and labelled with the traditional lettering convention (A, B, C…, upper/lowercase
-  for art major/menor, an apostrophe for plana endings), scoped per stanza.
+  for art major/menor, an apostrophe for plana endings), scoped per stanza. Selecting a rhyme group
+  highlights its matching endings.
 - **Click-to-explain metrics** - clicking a line's syllable count or rhyme letter opens a popup
   explaining exactly how that number or letter was derived.
-- **Classic structure reference** - a panel of well-known Catalan poetic forms (sonet, quartets,
-  romanç, haikú, etc.) with their expected verse lengths and rhyme patterns, as a cheat sheet.
+- **Poetry reference and examples** - panels provide a guided metrics explanation, well-known
+  Catalan forms (sonet, quartets, romanç, haikú, etc.), and bundled real poems to load into the
+  editor.
 - **Offline Catalan spellchecking** - the real Hunspell engine (compiled to WebAssembly via
   `hunspell-asm`) runs a Central-or-Valencian-variant dictionary in a Web Worker and underlines
-  unrecognized words.
+  unrecognized words. Words can be added to a local personal dictionary.
 - **Click-a-word synonyms** - clicking any word looks it up in an offline Catalan thesaurus and
   offers alternatives, which can be inserted with one click.
-- **Local file storage** - documents autosave to the browser (IndexedDB) and can also be opened
-  from / saved directly to disk via the File System Access API, with a download/upload fallback on
-  browsers that don't support it.
-- **Light/dark themes**, an optional subtle paper texture, and a responsive layout that works on
-  phones as well as desktops.
+- **Local file storage** - the most recently opened, created, or explicitly saved document is
+  backed up in IndexedDB and restored on reopening the app. Plain-text poems can be opened from or
+  saved directly to disk with the File System Access API, with upload/download fallbacks where that
+  API is unavailable. Use the toolbar or ⌘/Ctrl+S to save; typing does not write to disk.
+- **Customizable writing surface** - choose Central or Valencian analysis, light/dark/system theme,
+  one of four visual styles, font size, optional paper texture, and a responsive layout for phones
+  and desktops.
 
 ## Architecture
 
@@ -69,15 +73,15 @@ src/
                  feeds editor content through the engine on every change.
   spellcheck/    Web Worker + client for offline Hunspell-based Catalan spellchecking.
   synonyms/      Client for the offline Catalan thesaurus (a build-time-compiled JSON index).
-  storage/       IndexedDB (documents, settings) and File System Access API wrappers.
+  storage/       IndexedDB backups/settings and File System Access API wrappers.
   structures/    Static reference data for classic Catalan poetic forms.
   hooks/         React hooks tying documents, settings, and theme state together.
   components/    UI: toolbar, settings/structures panels, synonym/metrics popups.
 ```
 
-The metrics engine is a heuristic, spelling-based approximation of Catalan phonology - it covers
-the general rules well but isn't a full linguistic analyzer, and its output has been spot-checked
-against real published poems (not formally verified against a reference corpus).
+The metrics engine is a heuristic, spelling-based approximation of Catalan phonology. It covers the
+general rules well but is not a full linguistic analyzer; its output has been spot-checked against
+real published poems rather than formally verified against a reference corpus.
 
 ### Data sources
 
@@ -99,8 +103,14 @@ npm install
 npm run dev             # start the dev server
 npm run build           # type-check and build for production
 npm run test            # run the engine's unit test suite
+npm run lint            # lint TypeScript and TSX source with oxlint
+npm run preview         # serve the production build locally
 npm run build:synonyms  # optional: (re)generate the synonyms dictionary
 ```
+
+`npm install` also runs `postinstall`, which copies the bundled Hunspell dictionaries into
+`public/dictionaries/`. The synonym build fetches the current Softcatalà source, so it needs network
+access; commit its generated JSON and license files when refreshing the bundled data.
 
 ## Deployment
 
