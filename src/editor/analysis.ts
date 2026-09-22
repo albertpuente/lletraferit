@@ -24,8 +24,11 @@ export interface LineInfo {
    * line has no words. Used to highlight the rhyming syllable(s) across
    * verses that share a rhyme group. */
   rhymeRange: { from: number; to: number } | null
-  /** Character ranges (within the line) of every syllable counted toward
-   * `syllableCount`, sinalefa-fused syllables merged into one range. */
+  /** Character ranges (within the line) of every syllable in the verse
+   * (including trailing unstressed syllables not counted toward
+   * `syllableCount`), sinalefa-fused syllables merged into one range. Used
+   * for the editor's underline-curve display, so every syllable — including
+   * the verse's very last one — gets a curve. */
   metricalSyllables: { from: number; to: number }[]
   /** Whether this line is a blank stanza separator, as opposed to a verse.
    * Used to find stanza boundaries (e.g. to scope rhyme highlighting to a

@@ -20,6 +20,30 @@ describe('syllabifyWord', () => {
     ['uruguai', ['u', 'ru', 'guai']],
     ['arbre', ['ar', 'bre']],
     ['esponerós', ['es', 'po', 'ne', 'rós']],
+
+    // Mid-word rising diphthong (weak+strong vowel pair NOT in the word's
+    // last vowel segment): forms a single syllable, unlike the same "i/u +
+    // strong vowel" pattern at the very end of a word (see e.g. "família",
+    // "gràcia" above, which stay hiatus).
+    ['funciona', ['fun', 'cio', 'na']],
+    ['solucionar', ['so', 'lu', 'cio', 'nar']],
+    // A 3-vowel run ("iau") is still a single vowel segment: the internal
+    // weak+strong pair ("ia") must still hiatus-split (matching the
+    // word-final rule) even though another vowel ("u") follows within that
+    // same segment — regression test for a bug where checking "any vowel
+    // later in the word" (instead of "later in this vowel segment")
+    // incorrectly fused "siau" into one syllable.
+    ['siau', ['si', 'au']],
+
+    // Geminate "l·l" (punt volat) always splits into two plain "l"s across
+    // a syllable boundary, with the "·" itself dropped entirely — not kept
+    // together as a single digraph/unit.
+    ['col·laborar', ['col', 'la', 'bo', 'rar']],
+    ['pel·lícula', ['pel', 'lí', 'cu', 'la']],
+    ['al·leluia', ['al', 'le', 'lu', 'ia']],
+    ['il·lustre', ['il', 'lus', 'tre']],
+    ['pàl·lid', ['pàl', 'lid']],
+    ['intel·ligent', ['in', 'tel', 'li', 'gent']],
   ]
 
   for (const [word, expected] of cases) {

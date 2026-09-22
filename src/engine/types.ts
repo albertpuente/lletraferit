@@ -44,10 +44,11 @@ export interface VerseAnalysis {
    * null if the verse has no words. Used to highlight the rhyming syllable(s)
    * in the editor. */
   rhymeRange: { from: number; to: number } | null
-  /** Character ranges (within `text`) of every syllable counted toward
-   * `syllableCount`, in order. A sinalefa boundary merges the two fused
-   * syllables into one continuous range spanning both words; the last
-   * word's uncounted trailing unstressed syllables are omitted. */
+  /** Character ranges (within `text`) of every syllable of the verse, in
+   * order, for underline-curve display purposes. A sinalefa boundary merges
+   * the two fused syllables into one continuous range spanning both words.
+   * Includes the last word's trailing unstressed syllables too, even though
+   * those aren't counted toward `syllableCount`. */
   metricalSyllables: { from: number; to: number }[]
 }
 

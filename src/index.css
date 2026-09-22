@@ -148,6 +148,18 @@ body.paper-texture {
 .rhyme-bg-6 { @apply bg-teal-500/25 dark:bg-teal-400/25; }
 .rhyme-bg-7 { @apply bg-orange-500/25 dark:bg-orange-400/25; }
 
+/* Static equivalent of the editor's `.cm-syllable-curve` (defined as a
+ * CodeMirror theme rule, so scoped to the editor and unusable outside it —
+ * see CatalanEditor.tsx), used by the Structures panel's teaching
+ * illustration to reproduce the same underline-curve look for a plain,
+ * non-editor mockup of a verse. */
+.syllable-curve-demo {
+  border-bottom: 2px solid currentColor;
+  border-radius: 0 0 60% 60% / 0 0 45% 45%;
+  opacity: 0.5;
+  padding-bottom: 2px;
+}
+
 .unknown-word {
   text-decoration: underline wavy;
   text-decoration-color: theme('colors.red.500');

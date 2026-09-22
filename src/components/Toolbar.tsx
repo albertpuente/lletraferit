@@ -4,18 +4,16 @@ import type { SaveStatus } from '../hooks/useDocument'
 const STRUCTURES_HINT_DELAY_MS = 1000
 const COPIED_TOAST_DURATION_MS = 2000
 
-const STATUS_LABEL: Record<SaveStatus, string> = {
-  idle: '',
-  saving: 'Desant…',
-  saved: 'Desat',
-  'needs-permission': 'Cal reconnectar el fitxer',
-  error: 'Error en desar',
-}
-
 export interface ToolbarProps {
   name: string
-  onNameChange: (name: string) => void
+  /** Whether there are changes since the last successful save, shown as a
+   * small dot next to the filename rather than any "saved"/"unsaved" text. */
+  isDirty: boolean
+  /** Transient save-action feedback (e.g. a brief error indicator) — not a
+   * persistent "saved" status. */
   status: SaveStatus
+  /** Human-readable detail shown as a tooltip when `status === 'error'`. */
+  errorMessage: string | null
   hasFileHandle: boolean
   onNew: () => void
   onOpen: () => void
@@ -23,7 +21,6 @@ export interface ToolbarProps {
   /** Copies the document's text to the clipboard; should reject/throw on
    * failure so the confirmation toast is only shown on genuine success. */
   onCopy: () => Promise<void>
-  onReconnect: () => void
   onToggleSettings: () => void
   onToggleStructures: () => void
   onToggleAbout: () => void
@@ -31,14 +28,14 @@ export interface ToolbarProps {
 
 export function Toolbar({
   name,
-  onNameChange,
+  isDirty,
   status,
+  errorMessage,
   hasFileHandle,
   onNew,
   onOpen,
   onSave,
   onCopy,
-  onReconnect,
   onToggleSettings,
   onToggleStructures,
   onToggleAbout,
@@ -73,16 +70,14 @@ export function Toolbar({
     setShowStructuresHint(false)
   }
 
-  // "Desat" is only meaningful for documents linked to a real file on disk
-  // (hasFileHandle): a document that only lives in the app's local document
-  // store hasn't been saved anywhere the user chose, so showing "Desat" for
-  // it would be misleading reassurance. Other statuses (saving/error/needs
-  // reconnecting) are still shown regardless, since those are always worth
-  // surfacing.
-  const statusLabel = status === 'saved' && !hasFileHandle ? '' : STATUS_LABEL[status]
+  // The displayed "name" mirrors the hasFileHandle distinction: a document
+  // not yet linked to a real file has no meaningful filename to show (its
+  // internal name is just an untitled placeholder), so show "No desat"
+  // instead of that placeholder.
+  const displayName = hasFileHandle ? name : 'No desat'
 
   return (
-    <header className="relative flex flex-wrap items-center gap-2 border-b border-stone-200 px-3 py-2 sm:gap-3 sm:px-4 sm:py-2.5 dark:border-neutral-800">
+    <header className="relative border-b border-stone-200 dark:border-neutral-800">
       {showCopiedToast && (
         <div
           role="status"
@@ -92,65 +87,93 @@ export function Toolbar({
         </div>
       )}
 
-      <Logo />
+      {/* Row 1: logo + actions, always on one line. On narrow (phone-width)
+       * screens the filename and remaining icons move to row 2 below; from
+       * the `sm` breakpoint up everything fits on a single row instead (see
+       * the `sm:hidden` / `hidden sm:flex` pairs below). */}
+      <div className="flex items-center gap-2 px-3 py-2 sm:gap-3 sm:px-4 sm:py-2.5">
+        <Logo />
 
-      <div className="mx-1 hidden h-5 w-px bg-stone-200 sm:block dark:bg-neutral-800" aria-hidden="true" />
+        <div className="mx-1 hidden h-5 w-px bg-stone-200 sm:block dark:bg-neutral-800" aria-hidden="true" />
 
-      <div className="flex flex-wrap items-center gap-1">
-        <ToolbarButton onClick={onNew} title="Nou poema (⌘N)">
-          Nou
-        </ToolbarButton>
-        <ToolbarButton onClick={onOpen} title="Obre un fitxer (⌘O)">
-          Obre
-        </ToolbarButton>
-        <ToolbarButton onClick={onSave} title="Desa (⌘S)">
-          Desa
-        </ToolbarButton>
-        <ToolbarButton onClick={handleCopy} title="Copia el text al porta-retalls">
-          Copia
-        </ToolbarButton>
-      </div>
-
-      <input
-        className="min-w-[8rem] flex-1 truncate bg-transparent px-2 text-base text-stone-500 outline-none focus:text-stone-900 sm:text-sm dark:focus:text-neutral-100"
-        value={name}
-        onChange={(e) => onNameChange(e.target.value)}
-        aria-label="Nom del document"
-      />
-
-      <div className="flex shrink-0 items-center gap-2">
-        <div className="flex items-center gap-2 text-xs text-stone-400 dark:text-neutral-500">
-          {status === 'needs-permission' && hasFileHandle ? (
-            <button
-              className="touch-manipulation rounded-full bg-amber-100 px-2.5 py-1 text-amber-800 hover:bg-amber-200 dark:bg-amber-950 dark:text-amber-300"
-              onClick={onReconnect}
-            >
-              {statusLabel}
-            </button>
-          ) : (
-            <span>{statusLabel}</span>
-          )}
+        <div className="ml-auto flex flex-wrap items-center gap-1 sm:ml-0">
+          <ToolbarButton onClick={onNew} title="Nou poema (⌘N)">
+            Nou
+          </ToolbarButton>
+          <ToolbarButton onClick={onOpen} title="Obre un fitxer (⌘O)">
+            Obre
+          </ToolbarButton>
+          <ToolbarButton onClick={onSave} title="Desa (⌘S)">
+            Desa
+          </ToolbarButton>
+          <ToolbarButton onClick={handleCopy} title="Copia el text al porta-retalls">
+            Copia
+          </ToolbarButton>
         </div>
 
-        <ToolbarIconButton
-          onClick={() => {
-            if (structuresHintPending) dismissStructuresHint()
-            onToggleStructures()
-          }}
-          title="Estructures de composició (ajuda)"
-          className={showStructuresHint ? 'animate-structures-hint' : undefined}
-          onAnimationEnd={dismissStructuresHint}
+        <span
+          className="hidden min-w-[8rem] flex-1 items-center gap-1.5 truncate px-2 text-sm text-stone-500 sm:flex dark:text-neutral-400"
+          title={status === 'error' ? errorMessage ?? undefined : displayName}
         >
-          <BookIcon />
-        </ToolbarIconButton>
+          <span className="truncate">{displayName}</span>
+          <UnsavedDot isDirty={isDirty} hasError={status === 'error'} />
+        </span>
 
-        <ToolbarIconButton onClick={onToggleAbout} title="Quant a">
-          <InfoIcon />
-        </ToolbarIconButton>
+        <div className="ml-auto hidden shrink-0 items-center gap-2 sm:flex">
+          <ToolbarIconButton
+            onClick={() => {
+              if (structuresHintPending) dismissStructuresHint()
+              onToggleStructures()
+            }}
+            title="Estructures de composició (ajuda)"
+            className={showStructuresHint ? 'animate-structures-hint' : undefined}
+            onAnimationEnd={dismissStructuresHint}
+          >
+            <BookIcon />
+          </ToolbarIconButton>
 
-        <ToolbarIconButton onClick={onToggleSettings} title="Configuració">
-          <GearIcon />
-        </ToolbarIconButton>
+          <ToolbarIconButton onClick={onToggleAbout} title="Quant a">
+            <InfoIcon />
+          </ToolbarIconButton>
+
+          <ToolbarIconButton onClick={onToggleSettings} title="Configuració">
+            <GearIcon />
+          </ToolbarIconButton>
+        </div>
+      </div>
+
+      {/* Row 2: narrow screens only — filename on the left, structures/about/
+       * settings icons on the right. */}
+      <div className="flex items-center gap-2 px-3 pb-2 sm:hidden">
+        <span
+          className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-sm text-stone-500 dark:text-neutral-400"
+          title={status === 'error' ? errorMessage ?? undefined : displayName}
+        >
+          <span className="truncate">{displayName}</span>
+          <UnsavedDot isDirty={isDirty} hasError={status === 'error'} />
+        </span>
+
+        <div className="flex shrink-0 items-center gap-2">
+          <ToolbarIconButton
+            onClick={() => {
+              if (structuresHintPending) dismissStructuresHint()
+              onToggleStructures()
+            }}
+            title="Estructures de composició (ajuda)"
+            className={showStructuresHint ? 'animate-structures-hint' : undefined}
+            onAnimationEnd={dismissStructuresHint}
+          >
+            <BookIcon />
+          </ToolbarIconButton>
+
+          <ToolbarIconButton onClick={onToggleAbout} title="Quant a">
+            <InfoIcon />
+          </ToolbarIconButton>
+
+          <ToolbarIconButton onClick={onToggleSettings} title="Configuració">
+            <GearIcon />
+          </ToolbarIconButton>
+        </div>
       </div>
     </header>
   )
@@ -166,6 +189,19 @@ function Logo() {
         Lletra<span className="text-red-700 dark:text-red-400">ferit</span>
       </span>
     </div>
+  )
+}
+
+/** A small dot next to the filename indicating unsaved changes — replaces
+ * any "Desat"/"Cal reconnectar el fitxer" text status entirely. Amber for
+ * ordinary unsaved changes, red if the last save attempt failed. */
+function UnsavedDot({ isDirty, hasError }: { isDirty: boolean; hasError: boolean }) {
+  if (!isDirty && !hasError) return null
+  return (
+    <span
+      className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${hasError ? 'bg-red-500' : 'bg-amber-500'}`}
+      aria-label={hasError ? 'Error en desar' : 'Canvis sense desar'}
+    />
   )
 }
 

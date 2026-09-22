@@ -93,16 +93,30 @@ export function tokenizeVerse(text: string): string[] {
   return tokenizeVerseWithOffsets(text).map((t) => t.clean)
 }
 
-/** Maps character offsets in a word's apostrophe-stripped "clean" form (the
- * form syllabified) back to offsets in its original "raw" spelling, so
- * apostrophes are folded into whichever adjacent syllable's range they fall
- * next to instead of desyncing every offset after them. */
+/** Maps character offsets in a word's "reduced" form — as actually consumed
+ * for syllable lengths by `syllabifyWord` — back to offsets in its original
+ * raw spelling, so punctuation that doesn't survive into the syllable text
+ * (apostrophes, and the geminate-l interpunct "·") is folded into an
+ * adjacent syllable's range instead of desyncing every offset after it.
+ * `syllabifyWord` drops "·" entirely when assembling each syllable's text
+ * (see tokenizeConsonants), even though the raw/clean word it's given still
+ * contains it, so it must be accounted for here too — otherwise every
+ * syllable after a "·" (e.g. in "pel·lícula") gets the wrong character
+ * range, making its underline curve appear over the wrong text. Unlike an
+ * apostrophe (folded into the syllable that *follows* it), "·" is folded
+ * into the syllable that *precedes* it, matching how it's conventionally
+ * written attached to the first "l" of a geminate "l·l" (e.g. "pel·" /
+ * "lí", not "pel" / "·lí"). */
 function cleanToRawBoundaries(raw: string): number[] {
   const boundaries = [0]
   let rawIdx = 0
   for (const ch of raw) {
     rawIdx++
     if (ch === "'" || ch === '’') continue
+    if (ch === '·') {
+      boundaries[boundaries.length - 1] = rawIdx
+      continue
+    }
     boundaries.push(rawIdx)
   }
   return boundaries
@@ -124,11 +138,14 @@ function wordSyllableSpans(word: WordAnalysis, tokenSpan: TokenSpan): { from: nu
 }
 
 /**
- * Character ranges (within `text`) of every syllable that counts toward the
- * verse's metrical `syllableCount`: one range per counted syllable, except
- * that a sinalefa boundary merges the two fused syllables into a single
- * continuous range (spanning both words), and the last word's uncounted
- * trailing unstressed syllables are dropped entirely.
+ * Character ranges (within `text`) of every syllable of the verse, for the
+ * editor's underline-curve display: one range per syllable, except that a
+ * sinalefa boundary merges the two fused syllables into a single continuous
+ * range (spanning both words). Deliberately includes the last word's
+ * trailing unstressed syllables too (even though they don't count toward
+ * `syllableCount`), so every syllable in the verse — including its very
+ * last one — always gets a curve; `syllableCount` itself is computed
+ * separately and is unaffected by this.
  */
 function computeMetricalSyllables(
   words: WordAnalysis[],
@@ -146,12 +163,6 @@ function computeMetricalSyllables(
         flat.push(spans[si])
       }
     }
-  }
-
-  if (words.length > 0) {
-    const lastWord = words[words.length - 1]
-    const trailingUnstressed = lastWord.syllables.length - 1 - lastWord.stressIndex
-    if (trailingUnstressed > 0) flat.length = Math.max(0, flat.length - trailingUnstressed)
   }
 
   return flat

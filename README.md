@@ -1,5 +1,6 @@
 # Lletraferit
 
+<img src="docs/screenshot.png" alt="Lletraferit editor screenshot" align="right" width="360">
 
 > **Lletraferit, -ida** *(adj., Catalan)* - literally "letter-wounded"; someone struck, smitten, or
 > afflicted by literature. A person hopelessly devoted to writing and the written word.

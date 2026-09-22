@@ -39,6 +39,19 @@ describe('analyzeVerse', () => {
     expect(verse.syllableCount).toBe(verse.rawSyllables)
   })
 
+  it('splits "funciona" as fun-cio-na (3 syllables), not fun-ci-o-na', () => {
+    // Regression test: "funciona" is trisyllabic (fun-CIO-na, stressed
+    // plana on "cio"), not four syllables. verse.syllableCount is 3, not 4,
+    // because the verse-level metric count truncates the final unstressed
+    // trailing syllable ("na") per the standard "count up to the last
+    // stressed syllable" rule — the syllable split itself is what's under
+    // test here, via rawSyllables and the word's own syllable list.
+    const verse = analyzeVerse('No funciona')
+    expect(verse.words[1].syllables).toEqual(['fun', 'cio', 'na'])
+    expect(verse.rawSyllables).toBe(4)
+    expect(verse.syllableCount).toBe(3)
+  })
+
   it('counts heptasyllabic verses from Salvat-Papasseit\'s "Quina grua el meu estel"', () => {
     // Verified against Josep Bargalló's published scansion of the poem
     // (josepbargallo.wordpress.com), which marks all these as heptasíl·labs.
@@ -123,5 +136,29 @@ describe('computeRhymeScheme', () => {
     expect(computeRhymeScheme(moltsCols)[0].label.toUpperCase()).toBe(
       computeRhymeScheme(moltsCols)[1].label.toUpperCase(),
     )
+  })
+
+  it('gives every syllable of a word containing a geminate "l·l" the correct on-screen character range (for the editor\'s underline curves)', () => {
+    // Regression test: syllabifyWord() drops the "·" from its syllable text
+    // (e.g. "col·laborar" -> ["col", "la", "bo", "rar"]), but metricalSyllables
+    // maps those syllable lengths back onto the ORIGINAL text (including the
+    // "·") to know where to draw each curve. Every syllable after a "·" used
+    // to be shifted by one character, making its curve appear over the wrong
+    // letters (e.g. "·lí" instead of "lí"). The "·" itself must land at the
+    // end of the range of the syllable that PRECEDES it (e.g. "col·", not
+    // "col"), matching how it's conventionally written attached there.
+    const cases: [string, string[]][] = [
+      ['col·laborar', ['col·', 'la', 'bo', 'rar']],
+      ['pel·lícula', ['pel·', 'lí', 'cu', 'la']],
+      ['al·leluia', ['al·', 'le', 'lu', 'ia']],
+      ['il·lustre', ['il·', 'lus', 'tre']],
+      ['pàl·lid', ['pàl·', 'lid']],
+      ['intel·ligent', ['in', 'tel·', 'li', 'gent']],
+    ]
+    for (const [word, expectedRanges] of cases) {
+      const verse = analyzeVerse(word)
+      const actualRanges = verse.metricalSyllables.map((s) => verse.text.slice(s.from, s.to))
+      expect(actualRanges).toEqual(expectedRanges)
+    }
   })
 })

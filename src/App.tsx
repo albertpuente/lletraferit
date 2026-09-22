@@ -154,14 +154,14 @@ function App() {
     <div className="relative flex h-full flex-col">
       <Toolbar
         name={doc.name}
-        onNameChange={doc.setName}
+        isDirty={doc.isDirty}
         status={doc.status}
+        errorMessage={doc.errorMessage}
         hasFileHandle={doc.hasFileHandle}
         onNew={doc.newDocument}
         onOpen={doc.openDocument}
         onSave={doc.saveDocument}
         onCopy={handleCopy}
-        onReconnect={doc.reconnectFile}
         onToggleSettings={() => setShowSettings((v) => !v)}
         onToggleStructures={() => setShowStructures((v) => !v)}
         onToggleAbout={() => setShowAbout((v) => !v)}

@@ -1,11 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { downloadAsFile, isFileSystemAccessSupported, openFile, verifyPermission, writeToHandle } from '../storage/fileSystem'
+import {
+  createSaveHandle,
+  downloadAsFile,
+  isFileSystemAccessSupported,
+  openFile,
+  tryWriteToFreshHandle,
+  tryWriteToHandle,
+} from '../storage/fileSystem'
 import { getMostRecentDocument, saveSettings, upsertDocument } from '../storage/db'
 
-export type SaveStatus = 'idle' | 'saving' | 'saved' | 'needs-permission' | 'error'
+/** Transient save-action feedback only — NOT a persistent "saved"/"needs
+ * reconnecting" indicator (see `isDirty` for that). 'saving' and 'error'
+ * are only ever set for the duration of an explicit save action. */
+export type SaveStatus = 'idle' | 'saving' | 'error'
 
 const UNTITLED_NAME = 'Sense titol.txt'
-const AUTOSAVE_DELAY_MS = 5000
 
 function createId(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -13,188 +22,195 @@ function createId(): string {
     : `doc-${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
+/**
+ * Manages the current document's content/name, its link (if any) to a real
+ * on-disk file via the File System Access API, and explicit save/open/new
+ * actions. Deliberately has NO autosave: the document is only ever written
+ * to disk when the user explicitly saves (button click or Ctrl/Cmd+S).
+ * `isDirty` tracks whether there are unsaved changes since the last
+ * successful save (or load), for the UI to show as a simple indicator.
+ */
 export function useDocument() {
   const [id, setId] = useState<string>(() => createId())
   const [name, setNameState] = useState(UNTITLED_NAME)
   const [content, setContentState] = useState('')
+  const [isDirty, setIsDirty] = useState(false)
   const [status, setStatus] = useState<SaveStatus>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const fileHandleRef = useRef<FileSystemFileHandle | undefined>(undefined)
+  // React state updates are not visible to callbacks created by the previous
+  // render until React has committed the next render. Keep the values used by
+  // save actions in refs as well, so ⌘S immediately after typing cannot write
+  // the old (often empty) `content` snapshot captured by the keyboard listener.
+  const idRef = useRef(id)
+  const nameRef = useRef(name)
+  const contentRef = useRef(content)
   const [hasFileHandle, setHasFileHandle] = useState(false)
   const restoredRef = useRef(false)
-  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Set by any action that establishes "what document is current"
+  // (typing, renaming, New, Open, a completed save) before the async
+  // restore below has resolved. Without this, a user who starts typing (or
+  // opens/creates a document) right after mount can have that in-progress
+  // work silently overwritten the moment the slower IndexedDB read resolves
+  // afterwards — which then makes the *next* save write the wrong (stale,
+  // restored) content over whatever the user actually meant to save.
+  const documentReplacedRef = useRef(false)
 
-  // Restore the most recently edited document on first mount.
+  // Restore the most recently edited document on first mount, so a reload
+  // doesn't lose in-progress work even though there's no autosave-to-disk.
   useEffect(() => {
     if (restoredRef.current) return
     restoredRef.current = true
     ;(async () => {
       const doc = await getMostRecentDocument()
-      if (doc) {
+      if (doc && !documentReplacedRef.current) {
+        idRef.current = doc.id
+        nameRef.current = doc.name
+        contentRef.current = doc.content
         setId(doc.id)
         setNameState(doc.name)
         setContentState(doc.content)
         fileHandleRef.current = doc.fileHandle
         setHasFileHandle(!!doc.fileHandle)
-        setStatus('saved')
+        setIsDirty(false)
       }
     })()
   }, [])
 
-  const persist = useCallback(async (docId: string, docName: string, docContent: string) => {
-    setStatus('saving')
+  // Backs up the document to the app's local (IndexedDB) document store,
+  // separate from the real on-disk file (if any) — purely so the most
+  // recent document can be restored above if the app is reopened later.
+  // This is NOT an autosave: it only ever runs right after an explicit,
+  // successful save/new/open, never on a timer or on every keystroke.
+  const backup = useCallback(async (docId: string, docName: string, docContent: string) => {
     try {
-      if (fileHandleRef.current) {
-        const granted = await verifyPermission(fileHandleRef.current)
-        if (!granted) {
-          setStatus('needs-permission')
-          return
-        }
-        // Write the actual file first: this is the part the user cares
-        // about, and it must not be skipped just because the IndexedDB
-        // bookkeeping below (which also tries to persist the handle
-        // itself, for restoring the file link on next launch) fails.
-        await writeToHandle(fileHandleRef.current, docContent)
-      }
-
-      try {
-        await upsertDocument({
-          id: docId,
-          name: docName,
-          content: docContent,
-          updatedAt: Date.now(),
-          fileHandle: fileHandleRef.current,
-        })
-      } catch {
-        // Some browsers can't structured-clone a FileSystemFileHandle into
-        // IndexedDB. The real file above is already saved either way, so
-        // just drop the handle from this record instead of failing the
-        // whole save — the document just won't auto-relink to its file on
-        // next launch.
-        await upsertDocument({ id: docId, name: docName, content: docContent, updatedAt: Date.now() })
-      }
-      await saveSettings({ lastDocId: docId })
-
-      setStatus('saved')
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : String(error))
-      setStatus('error')
+      await upsertDocument({
+        id: docId,
+        name: docName,
+        content: docContent,
+        updatedAt: Date.now(),
+        fileHandle: fileHandleRef.current,
+      })
+    } catch {
+      // Some browsers can't structured-clone a FileSystemFileHandle into
+      // IndexedDB; back up without it rather than failing entirely.
+      await upsertDocument({ id: docId, name: docName, content: docContent, updatedAt: Date.now() })
     }
+    await saveSettings({ lastDocId: docId })
   }, [])
 
-  // Schedules a debounced autosave, resetting the 5s inactivity window on
-  // every call — shared by both content and name edits so renaming the
-  // document autosaves the same way typing does.
-  const scheduleAutosave = useCallback(
-    (docId: string, docName: string, docContent: string) => {
-      if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
-      autosaveTimer.current = setTimeout(() => {
-        persist(docId, docName, docContent)
-      }, AUTOSAVE_DELAY_MS)
-    },
-    [persist],
-  )
+  const setContent = useCallback((next: string) => {
+    documentReplacedRef.current = true
+    contentRef.current = next
+    setContentState(next)
+    setIsDirty(true)
+  }, [])
 
-  const setContent = useCallback(
-    (next: string) => {
-      setContentState(next)
-      // Hide the "Desat" label immediately: the new content is genuinely
-      // unsaved until the pending autosave (or an explicit save) completes,
-      // so showing a stale "saved" status would be misleading.
-      setStatus('idle')
-      scheduleAutosave(id, name, next)
-    },
-    [id, name, scheduleAutosave],
-  )
-
-  const setName = useCallback(
-    (next: string) => {
-      setNameState(next)
-      setStatus('idle')
-      scheduleAutosave(id, next, content)
-    },
-    [id, content, scheduleAutosave],
-  )
+  const setName = useCallback((next: string) => {
+    documentReplacedRef.current = true
+    nameRef.current = next
+    setNameState(next)
+    setIsDirty(true)
+  }, [])
 
   const newDocument = useCallback(() => {
-    if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
+    documentReplacedRef.current = true
     const newId = createId()
     fileHandleRef.current = undefined
+    idRef.current = newId
+    nameRef.current = UNTITLED_NAME
+    contentRef.current = ''
     setHasFileHandle(false)
     setId(newId)
     setNameState(UNTITLED_NAME)
     setContentState('')
-    setStatus('saved')
-    persist(newId, UNTITLED_NAME, '')
-  }, [persist])
+    setIsDirty(false)
+    setStatus('idle')
+    backup(newId, UNTITLED_NAME, '')
+  }, [backup])
 
   const openDocument = useCallback(async () => {
     const opened = await openFile()
     if (!opened) return
-    if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
+    documentReplacedRef.current = true
     const newId = createId()
     fileHandleRef.current = opened.handle
+    idRef.current = newId
+    nameRef.current = opened.name
+    contentRef.current = opened.content
     setHasFileHandle(!!opened.handle)
     setId(newId)
     setNameState(opened.name)
     setContentState(opened.content)
-    // showOpenFilePicker only grants read permission by default; request
-    // readwrite immediately, while we're still within the user gesture from
-    // the Open click, so autosave doesn't silently discover the missing
-    // permission later (from a non-gesture context) and get stuck showing
-    // "Cal reconnectar el fitxer" on every opened file.
-    if (opened.handle) {
-      await verifyPermission(opened.handle)
-    }
-    setStatus('saved')
-    await persist(newId, opened.name, opened.content)
-  }, [persist])
+    setIsDirty(false)
+    setStatus('idle')
+    await backup(newId, opened.name, opened.content)
+  }, [backup])
 
   const saveDocument = useCallback(async () => {
-    // Always a plain, immediate save — the same persist() an autosave
-    // would trigger — never a file picker/dialog. A document only gets
-    // linked to a real file via "Obre" (opening an existing file); "Desa"
-    // just writes to that same file if one is linked (see persist()),
-    // or otherwise only to the app's local document store.
-    if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
+    // Read from the refs rather than the closure's React-state snapshot. This
+    // matters when a native keyboard shortcut fires before React has rerendered
+    // after CodeMirror's onChange callback.
+    const currentId = idRef.current
+    const currentName = nameRef.current
+    const currentContent = contentRef.current
+    documentReplacedRef.current = true
+    setStatus('saving')
+    setErrorMessage(null)
+
+    // Already linked to a real file: just try to save straight to it.
+    // tryWriteToHandle silently (re-)requests permission if needed — safe
+    // here because this whole function only ever runs from a direct user
+    // gesture (the Desa button or Ctrl/Cmd+S), never from a background
+    // timer, so the browser can grant it without an extra prompt.
+    if (fileHandleRef.current) {
+      const wrote = await tryWriteToHandle(fileHandleRef.current, currentContent)
+      if (wrote) {
+        setIsDirty(false)
+        setStatus('idle')
+        await backup(currentId, currentName, currentContent)
+        return
+      }
+      // Couldn't write (permission no longer available, handle no longer
+      // valid, etc.): fall through to the save-location picker below
+      // instead of getting stuck — the user just re-picks a location and
+      // things work again, with no "reconnect" prompt ever shown.
+    }
+
     if (!isFileSystemAccessSupported()) {
-      downloadAsFile(name, content)
+      downloadAsFile(currentName, currentContent)
+      setIsDirty(false)
+      setStatus('idle')
+      await backup(currentId, currentName, currentContent)
+      return
     }
-    await persist(id, name, content)
-  }, [content, id, name, persist])
 
-  const reconnectFile = useCallback(async () => {
-    if (!fileHandleRef.current) return
-    const granted = await verifyPermission(fileHandleRef.current)
-    if (granted) {
-      await persist(id, name, content)
+    const picked = await createSaveHandle(currentName)
+    if (!picked) {
+      // User cancelled the picker: leave everything as it was.
+      setStatus('idle')
+      return
     }
-  }, [content, id, name, persist])
-
-  // The browser can silently drop a file's write permission in the background
-  // (e.g. autosave runs on a timer, with no user gesture, so it can't re-prompt;
-  // some browsers also revoke the grant after the tab loses focus for a while).
-  // Rather than forcing the user to notice and click "Cal reconnectar el
-  // fitxer" every time, silently retry on the very next keystroke or click —
-  // those *do* carry the user gesture needed to re-request permission, so in
-  // the common case the file reconnects transparently and the banner just
-  // disappears on its own.
-  useEffect(() => {
-    if (status !== 'needs-permission') return
-    let attempted = false
-    const tryReconnect = () => {
-      if (attempted) return
-      attempted = true
-      reconnectFile()
+    // Use tryWriteToFreshHandle (not tryWriteToHandle) here: this handle was
+    // just picked, so re-verifying permission before writing is not only
+    // unnecessary but can actively fail (see its docstring) and leave
+    // behind the empty file the OS already created when the location was
+    // chosen.
+    const wrote = await tryWriteToFreshHandle(picked.handle, currentContent)
+    if (!wrote) {
+      setErrorMessage('No s\u2019ha pogut desar el fitxer.')
+      setStatus('error')
+      return
     }
-    window.addEventListener('keydown', tryReconnect, { capture: true, once: true })
-    window.addEventListener('pointerdown', tryReconnect, { capture: true, once: true })
-    return () => {
-      window.removeEventListener('keydown', tryReconnect, { capture: true })
-      window.removeEventListener('pointerdown', tryReconnect, { capture: true })
-    }
-  }, [status, reconnectFile])
+    fileHandleRef.current = picked.handle
+    setHasFileHandle(true)
+    nameRef.current = picked.name
+    setNameState(picked.name)
+    setIsDirty(false)
+    setStatus('idle')
+    await backup(currentId, picked.name, currentContent)
+  }, [backup])
 
   return {
     id,
@@ -202,6 +218,7 @@ export function useDocument() {
     setName,
     content,
     setContent,
+    isDirty,
     status,
     errorMessage,
     hasFileHandle,
@@ -209,6 +226,5 @@ export function useDocument() {
     newDocument,
     openDocument,
     saveDocument,
-    reconnectFile,
   }
 }

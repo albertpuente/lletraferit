@@ -16,7 +16,6 @@ export type VisualTheme = 'classic' | 'typewriter' | 'modern' | 'calligraphy'
 export interface AppSettings {
   key: 'settings'
   variant: CatalanVariant
-  autosaveIntervalMs: number
   theme: 'light' | 'dark' | 'system'
   /** Overall visual "personality" (color accent, editor/logo font) —
    * independent of the light/dark setting above. */
@@ -86,7 +85,6 @@ export function getDefaultFontSize(): number {
 export const DEFAULT_SETTINGS: AppSettings = {
   key: 'settings',
   variant: 'central',
-  autosaveIntervalMs: 2000,
   theme: 'light',
   visualTheme: 'classic',
   lastDocId: null,

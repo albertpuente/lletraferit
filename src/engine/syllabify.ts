@@ -26,8 +26,12 @@ const ONSET_CLUSTERS = new Set([
 ])
 
 // Consonant digraphs/units that must stay together when splitting clusters.
-// Order matters: longest first, so the tokenizer matches greedily.
-const CONSONANT_DIGRAPHS = ['l·l', 'ny', 'ss', 'rr', 'tx', 'tj', 'tg', 'dj', 'qu', 'gu']
+// Order matters: longest first, so the tokenizer matches greedily. Note
+// "l·l" (geminate l, e.g. "col·legi") is intentionally NOT here: unlike a
+// real digraph, it always splits into two separate "l"s across a syllable
+// boundary (see tokenizeConsonants, which drops the "·" itself), so it's
+// handled as two plain "l" consonants rather than kept together.
+const CONSONANT_DIGRAPHS = ['ny', 'ss', 'rr', 'tx', 'tj', 'tg', 'dj', 'qu', 'gu']
 
 function isVowel(ch: string | undefined): ch is string {
   return !!ch && VOWELS.includes(ch)
@@ -92,13 +96,59 @@ function buildSegments(lower: string, roles: ('V' | 'C')[]): Segment[] {
   return segments
 }
 
+/** Whether the vowel at `index` is the last vowel in `word` — i.e. only
+ * consonants (if anything) follow it. Used to distinguish a word-final
+ * unstressed weak+strong vowel pair (conventionally hiatus in Catalan —
+ * e.g. "família", "gràcia", or, through a trailing plural "-s", "dues")
+ * from the same pair occurring mid-word, which instead usually forms a
+ * single rising-diphthong syllable (e.g. "funciona" -> fun-CIO-na, not
+ * fun-ci-o-na). */
+function isLastVowelInWord(word: string, index: number): boolean {
+  for (let i = index + 1; i < word.length; i++) {
+    if (isVowel(word[i])) return false
+  }
+  return true
+}
+
 /**
  * Splits a vowel-only segment into syllable nuclei ranges, applying the
  * hiatus/diphthong rules pairwise.
  */
 function splitVowelSegment(lower: string, start: number, end: number): [number, number][] {
+  // Computed once per vowel segment (not per vowel pair): whether this is
+  // the word's last vowel-bearing segment, i.e. nothing but consonants (if
+  // anything) follow it — see isLastVowelInWord and its use below. Must be
+  // based on the whole segment's end, not a pair's second vowel, so that a
+  // 3+ vowel run like "siau" (all one segment) isn't misjudged pair by
+  // pair: its "ia" pair must still hiatus-split even though another vowel
+  // ("u") happens to follow within that same segment.
+  const segmentIsWordFinal = isLastVowelInWord(lower, end - 1)
+
+  // Special case: a word-final vowel triple shaped weak+weak+strong (e.g.
+  // "al·leluia" -> ...-lu-ia, from "u-i-a") resolves as [weak] +
+  // [weak+strong diphthong] — Catalan doesn't allow a 3-vowel nucleus, and
+  // the diphthong forms around the vowel that ends up stressed (the strong
+  // one), leaving the earlier weak vowel as its own hiatus syllable. This
+  // takes priority over the general pairwise rule below, which (being
+  // strictly left-to-right) would instead group the two weak vowels
+  // together first and leave the strong vowel alone (e.g. wrongly "lui-a"
+  // instead of "lu-ia").
+  if (
+    end - start === 3 &&
+    segmentIsWordFinal &&
+    isWeakVowel(lower[start]) &&
+    isWeakVowel(lower[start + 1]) &&
+    isStrongVowel(lower[start + 2])
+  ) {
+    return [
+      [start, start + 1],
+      [start + 1, end],
+    ]
+  }
+
   const nuclei: [number, number][] = []
   let nucleusStart = start
+
   for (let i = start; i < end - 1; i++) {
     const v1 = lower[i]
     const v2 = lower[i + 1]
@@ -115,7 +165,15 @@ function splitVowelSegment(lower: string, start: number, end: number): [number, 
     } else if (isHiatusForcingWeak(v2)) {
       hiatus = true
     } else if (isWeakVowel(v1) && isStrongVowel(v2)) {
-      hiatus = true
+      // A rising (weak+strong) pair forms a single diphthong syllable when
+      // it occurs mid-word (e.g. "fun-CIO-na"), but is conventionally
+      // treated as hiatus when it's within the word's last vowel segment
+      // (e.g. "família" -> fa-mí-LI-A, "gràcia" -> grà-CI-A, "dues" ->
+      // DU-es, "siau" -> si-AU) — a lexicalized pattern covering common
+      // Catalan grammatical endings (-ia, -ie, -ua, plus plurals of those
+      // via a trailing "-s") and word-final "-ió" (whose stress, written
+      // with an accent when needed, further reinforces the hiatus reading).
+      hiatus = segmentIsWordFinal
     } else if (isStrongVowel(v1) && isStrongVowel(v2)) {
       hiatus = true
     } else {
@@ -131,11 +189,19 @@ function splitVowelSegment(lower: string, start: number, end: number): [number, 
   return nuclei
 }
 
-/** Tokenizes a consonant run into digraph-aware units. */
+/** Tokenizes a consonant run into digraph-aware units, dropping the
+ * geminate-l separator "·" entirely (see CONSONANT_DIGRAPHS) so "l·l"
+ * becomes two plain "l" consonants rather than one atomic unit — matching
+ * how it's actually split across a syllable boundary (e.g. "col·laborar"
+ * -> col-la-bo-rar, "il·lustre" -> il-lus-tre). */
 function tokenizeConsonants(run: string): string[] {
   const units: string[] = []
   let i = 0
   outer: while (i < run.length) {
+    if (run[i] === '·') {
+      i += 1
+      continue
+    }
     for (const digraph of CONSONANT_DIGRAPHS) {
       if (run.startsWith(digraph, i)) {
         units.push(digraph)

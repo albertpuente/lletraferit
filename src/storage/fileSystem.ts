@@ -4,7 +4,13 @@
  * download link) for browsers that don't support it (Firefox, Safari).
  */
 
+/** Whether this browser can present a native location picker before saving. */
 export function isFileSystemAccessSupported(): boolean {
+  return typeof window !== 'undefined' && 'showSaveFilePicker' in window
+}
+
+/** Whether this browser can present a native picker for opening a file. */
+function isOpenFilePickerSupported(): boolean {
   return typeof window !== 'undefined' && 'showOpenFilePicker' in window
 }
 
@@ -25,7 +31,7 @@ export interface OpenedFile {
 
 /** Opens a file picker and reads the selected file's text content. */
 export async function openFile(): Promise<OpenedFile | null> {
-  if (isFileSystemAccessSupported()) {
+  if (isOpenFilePickerSupported()) {
     try {
       const [handle] = await window.showOpenFilePicker(PICKER_OPTIONS)
       const file = await handle.getFile()
@@ -72,6 +78,58 @@ export async function writeToHandle(handle: FileSystemFileHandle, content: strin
   await writable.close()
 }
 
+/**
+ * Attempts to write `content` to `handle`, first (re-)verifying/requesting
+ * readwrite permission, and never throwing: any failure along the way
+ * (permission denied, the handle no longer being valid, a genuine disk
+ * write error, etc.) is reported back as `false` rather than propagated,
+ * so callers can uniformly fall back to a fresh save-location picker
+ * instead of getting stuck on a broken handle or showing a "reconnect"
+ * prompt. Intended for handles that may have been granted in a *previous*
+ * session (e.g. restored from IndexedDB) and so may need re-verifying.
+ *
+ * Do NOT use this right after `createSaveHandle` for a handle the user just
+ * picked in this same action — see `tryWriteToFreshHandle` instead, which
+ * skips this permission dance entirely for that case.
+ */
+export async function tryWriteToHandle(handle: FileSystemFileHandle, content: string): Promise<boolean> {
+  try {
+    const granted = await verifyPermission(handle)
+    if (!granted) return false
+    await writeToHandle(handle, content)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Writes `content` to a handle that was *just* returned by
+ * `createSaveHandle` in this same save action, without re-verifying
+ * permission first.
+ *
+ * `showSaveFilePicker` already grants "readwrite" permission as part of
+ * resolving the picker, and the browser creates (and truncates to 0 bytes)
+ * the target file as soon as the user confirms a location — before any
+ * writing happens. If a caller re-checks permission afterwards (as
+ * `tryWriteToHandle` does) and that check needs to fall back to
+ * `requestPermission`, it can silently fail because the "transient
+ * activation" from the picker's own user gesture may already be spent by
+ * the time the picker's promise resolves — with no further prompt shown to
+ * the user. The write is then skipped, but the already-created empty file
+ * is left behind, which is exactly what previously showed up as "saving
+ * creates a 0-byte file". Since the handle is fresh and pre-granted, this
+ * function writes directly with no permission check, still never throwing.
+ */
+export async function tryWriteToFreshHandle(handle: FileSystemFileHandle, content: string): Promise<boolean> {
+  try {
+    await writeToHandle(handle, content)
+    return true
+  } catch {
+    return false
+  }
+}
+
 /** Prompts the user to choose a location to save a new file, returning the handle. */
 export async function pickSaveHandle(suggestedName: string): Promise<FileSystemFileHandle | null> {
   try {
@@ -88,27 +146,19 @@ export interface SaveHandleResult {
 }
 
 /**
- * Prompts the user to choose a save location and immediately verifies (or
- * requests) readwrite permission on the resulting handle, before returning
- * it — mirroring the same immediate-verification pattern already used for
- * open handles (see `openDocument` in useDocument.ts). A handle from
- * `showSaveFilePicker` is not reliably pre-granted permission in every
- * browser; deferring the permission check to a later, separately-awaited
- * step (as an earlier version of this code did, via `persist`) introduces
- * enough extra async hops for the browser to no longer treat the check as
- * connected to the user's original gesture, so `requestPermission` quietly
- * fails instead of prompting — which showed up as the app immediately
- * flagging a brand new file as "needs reconnecting" right after saving it.
- * Returns null if the user cancels the picker, or if permission is not
- * granted.
+ * Prompts the user to choose a save location, returning the resulting
+ * handle and its name. Per the File System Access API spec, a handle
+ * returned by `showSaveFilePicker` already comes pre-granted the
+ * "readwrite" permission the picker was invoked with, so no separate
+ * permission check is needed here. Returns null only if the user cancels
+ * the picker.
  */
 export async function createSaveHandle(suggestedName: string): Promise<SaveHandleResult | null> {
   const handle = await pickSaveHandle(suggestedName)
   if (!handle) return null
-  const granted = await verifyPermission(handle)
-  if (!granted) return null
   return { handle, name: handle.name }
 }
+
 
 /** Fallback save: triggers a browser download of `content` as `name`. */
 export function downloadAsFile(name: string, content: string): void {
