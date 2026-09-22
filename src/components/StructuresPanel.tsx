@@ -1,13 +1,11 @@
 import { useRef } from 'react'
 import { POEM_STRUCTURES } from '../structures/definitions'
 import type { StructureVerse } from '../structures/definitions'
-import { EXAMPLE_POEMS } from '../structures/examples'
 import { verseTypeName } from '../engine'
 import { useClickOutside } from '../hooks/useClickOutside'
 
 export interface StructuresPanelProps {
   onClose: () => void
-  onLoadExample: (title: string, content: string) => void
   showAllSyllableCurves: boolean
   onToggleShowAllSyllableCurves: (value: boolean) => void
 }
@@ -70,7 +68,7 @@ function ClickToAnalyzeIllustration() {
       <p className="mb-2 text-xs leading-relaxed text-stone-400 dark:text-neutral-500">
         Clica sobre un nombre o lletra per veure l'anàlisi:
       </p>
-      <div className="mb-3 flex items-center gap-2 rounded-md border border-stone-200 bg-[var(--paper-bg)] px-3 py-2 dark:border-neutral-700">
+      <div className="mb-3 flex items-center gap-2 rounded-md border border-stone-200 bg-[var(--paper-bg)] px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800">
         <span className="relative flex shrink-0 items-center gap-1 tabular-nums">
           <ClickPointerIcon className="pointer-events-none absolute top-3 left-2 h-5 w-5 text-stone-700 dark:text-neutral-300" />
           <span className="cursor-pointer text-sm text-stone-400 dark:text-neutral-500">4</span>
@@ -89,7 +87,7 @@ function ClickToAnalyzeIllustration() {
         </span>
       </div>
 
-      <div className="rounded-md border border-stone-200 bg-[var(--paper-bg)] p-3 text-sm shadow-sm dark:border-neutral-700">
+      <div className="rounded-md border border-stone-200 bg-[var(--paper-bg)] p-3 text-sm shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
         <div className="mb-2 last:mb-0">
           <div className="mb-1 text-[11px] uppercase tracking-wide text-stone-400 dark:text-neutral-500">
             Síl·labes
@@ -113,7 +111,6 @@ function ClickToAnalyzeIllustration() {
 
 export function StructuresPanel({
   onClose,
-  onLoadExample,
   showAllSyllableCurves,
   onToggleShowAllSyllableCurves,
 }: StructuresPanelProps) {
@@ -165,25 +162,6 @@ export function StructuresPanel({
         paraula aguda o esdrúixola (rima masculina). És la convenció clàssica per distingir totes dues
         terminacions dins un mateix esquema de rima.
       </p>
-
-      <div className="mb-4">
-        <h3 className="mb-2 text-sm font-medium text-stone-800 dark:text-neutral-200">Exemples</h3>
-        <p className="mb-2 text-xs leading-relaxed text-stone-400 dark:text-neutral-500">
-          Carrega un poema real a l'editor per veure com se n'analitzen les síl·labes i la rima.
-        </p>
-        <div className="flex flex-col gap-2">
-          {EXAMPLE_POEMS.map((example) => (
-            <button
-              key={example.id}
-              className="touch-manipulation rounded-md border border-stone-200 bg-white px-3 py-2 text-left hover:bg-stone-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
-              onClick={() => onLoadExample(example.title, example.content)}
-            >
-              <div className="text-sm font-medium text-stone-800 dark:text-neutral-200">{example.title}</div>
-              <div className="text-[11px] text-stone-400 dark:text-neutral-500">{example.attribution}</div>
-            </button>
-          ))}
-        </div>
-      </div>
 
       <h3 className="mb-2 text-sm font-medium text-stone-800 dark:text-neutral-200">Estructures</h3>
       <div className="flex flex-col gap-4">

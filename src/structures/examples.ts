@@ -1,5 +1,5 @@
 /**
- * A short catalog of full example poems, offered from the Estructures panel
+ * A short catalog of full example poems, offered from the Examples popup
  * as a quick way to load real, previously-verified text into the editor
  * (rather than an empty document) — useful for exploring how the
  * syllable/rhyme engine analyzes an actual poem.
@@ -13,6 +13,28 @@ export interface ExamplePoem {
 }
 
 export const EXAMPLE_POEMS: ExamplePoem[] = [
+  {
+    id: 'un-sonet-per-a-tu',
+    title: 'Un sonet per a tu',
+    attribution: 'Miquel Martí i Pol',
+    content: `Un sonet per a tu que em fas més clar
+tant el dolor fecund com l'alegria,
+un sonet amb els mots de cada dia,
+amb els mots de conèixer i estimar.
+
+Discretament l'escric, i vull pensar
+que el rebràs amb discreta melangia,
+com si es tractés d'alguna melodia
+que sempre és agradable recordar.
+
+Un sonet per a tu, només això,
+però amb aquell toc lleu de fantasia
+que fa que els versos siguin de debò.
+
+Un sonet per a tu que m'ha permès
+de dir-te clarament el que volia:
+més enllà de tenir-te no hi ha res.`,
+  },
   {
     id: 'lemigrant',
     title: 'L’emigrant',

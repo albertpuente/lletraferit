@@ -4,6 +4,7 @@ import { loadModule } from 'hunspell-asm'
 import type { Hunspell, HunspellFactory } from 'hunspell-asm'
 import { DICTIONARY_CODE, ELIDABLE_CLITICS } from './types'
 import type { SpellcheckRequest, SpellcheckResponse } from './types'
+import { isAlwaysKnownWord } from './knownWords'
 import type { CatalanVariant } from '../engine/types'
 
 // eslint-disable-next-line no-restricted-globals
@@ -55,6 +56,7 @@ async function loadDictionary(variant: CatalanVariant) {
 /** Checks a single token, aware of elided clitics like "l'amor" -> checks "amor". */
 function isKnown(token: string): boolean {
   if (!speller) return true
+  if (isAlwaysKnownWord(token)) return true
 
   const apostropheIndex = token.search(/['’]/)
   if (apostropheIndex > 0) {

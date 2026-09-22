@@ -181,18 +181,31 @@ body.paper-texture {
   display: inline-block;
 }
 
-/* A clear, triple-blink (in the active theme's accent color) drawing
- * attention to the Structures button every time the app is opened (see
- * Toolbar.tsx), so it stays a useful recurring nudge toward the
- * composition-help panel. Runs three times then stops automatically
- * (`onAnimationEnd` in Toolbar.tsx removes the class). */
+/* A clear, triple-blink drawing attention to the Structures button every
+ * time the app is opened (see Toolbar.tsx). During each flash it becomes a
+ * filled circular badge in the active accent color, with the book reversed
+ * to the paper color; this is much more evident than changing the line icon
+ * color alone. Runs three times then stops automatically (`onAnimationEnd`
+ * in Toolbar.tsx removes the class). */
 @keyframes structures-hint {
-  0%, 100% { color: inherit; }
-  25%, 75% { color: var(--accent); }
+  0%, 100% {
+    background-color: transparent;
+    box-shadow: none;
+    color: inherit;
+    transform: scale(1);
+  }
+  50% {
+    background-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+    color: var(--paper-bg);
+    transform: scale(1.08);
+  }
 }
 
 .animate-structures-hint {
-  animation: structures-hint 0.7s ease-in-out 3;
+  border-radius: 9999px;
+  animation: structures-hint 0.7s cubic-bezier(0.4, 0, 0.2, 1) 3;
+  will-change: background-color, box-shadow, color, transform;
 }
 
 @media (prefers-reduced-motion: reduce) {

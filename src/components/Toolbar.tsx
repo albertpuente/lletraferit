@@ -23,7 +23,7 @@ export interface ToolbarProps {
   onCopy: () => Promise<void>
   onToggleSettings: () => void
   onToggleStructures: () => void
-  onToggleAbout: () => void
+  onToggleExamples: () => void
 }
 
 export function Toolbar({
@@ -38,7 +38,7 @@ export function Toolbar({
   onCopy,
   onToggleSettings,
   onToggleStructures,
-  onToggleAbout,
+  onToggleExamples,
 }: ToolbarProps) {
   // Draws attention to the Structures button with a crimson triple-blink
   // shortly after the app loads, every time it's opened (not just the
@@ -125,15 +125,15 @@ export function Toolbar({
               if (structuresHintPending) dismissStructuresHint()
               onToggleStructures()
             }}
-            title="Estructures de composició (ajuda)"
+            title="Instruccions i estructures poètiques"
             className={showStructuresHint ? 'animate-structures-hint' : undefined}
             onAnimationEnd={dismissStructuresHint}
           >
             <BookIcon />
           </ToolbarIconButton>
 
-          <ToolbarIconButton onClick={onToggleAbout} title="Quant a">
-            <InfoIcon />
+          <ToolbarIconButton onClick={onToggleExamples} title="Exemples de poemes">
+            <BookmarkIcon />
           </ToolbarIconButton>
 
           <ToolbarIconButton onClick={onToggleSettings} title="Configuració">
@@ -159,15 +159,15 @@ export function Toolbar({
               if (structuresHintPending) dismissStructuresHint()
               onToggleStructures()
             }}
-            title="Estructures de composició (ajuda)"
+            title="Instruccions i estructures poètiques"
             className={showStructuresHint ? 'animate-structures-hint' : undefined}
             onAnimationEnd={dismissStructuresHint}
           >
             <BookIcon />
           </ToolbarIconButton>
 
-          <ToolbarIconButton onClick={onToggleAbout} title="Quant a">
-            <InfoIcon />
+          <ToolbarIconButton onClick={onToggleExamples} title="Exemples de poemes">
+            <BookmarkIcon />
           </ToolbarIconButton>
 
           <ToolbarIconButton onClick={onToggleSettings} title="Configuració">
@@ -272,12 +272,10 @@ function BookIcon() {
   )
 }
 
-function InfoIcon() {
+function BookmarkIcon() {
   return (
     <svg {...ICON_PROPS}>
-      <circle cx="12" cy="12" r="8.25" />
-      <path d="M12 11v5.5" />
-      <circle cx="12" cy="8" r="0.75" fill="currentColor" stroke="none" />
+      <path d="M7 4.5h10v16l-5-3-5 3Z" />
     </svg>
   )
 }

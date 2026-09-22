@@ -6,6 +6,7 @@ import type { MetricsClickInfo } from './editor/extensions/lineInfo'
 import { Toolbar } from './components/Toolbar'
 import { SettingsPanel } from './components/SettingsPanel'
 import { StructuresPanel } from './components/StructuresPanel'
+import { ExamplesPanel } from './components/ExamplesPanel'
 import { AboutPanel } from './components/AboutPanel'
 import { SynonymsPopup } from './components/SynonymsPopup'
 import { MetricsPopup } from './components/MetricsPopup'
@@ -51,6 +52,7 @@ function App() {
   usePaperTexture(settings.paperTexture)
   const [showSettings, setShowSettings] = useState(false)
   const [showStructures, setShowStructures] = useState(false)
+  const [showExamples, setShowExamples] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
   const spellCheckerRef = useRef<SpellChecker | null>(null)
   const [spellChecker, setSpellChecker] = useState<SpellChecker | null>(null)
@@ -109,6 +111,7 @@ function App() {
     doc.setName(`${title}.txt`)
     doc.setContent(content)
     setShowStructures(false)
+    setShowExamples(false)
   }
 
   // Create the spellcheck worker once settings are loaded, and reload the
@@ -163,8 +166,14 @@ function App() {
         onSave={doc.saveDocument}
         onCopy={handleCopy}
         onToggleSettings={() => setShowSettings((v) => !v)}
-        onToggleStructures={() => setShowStructures((v) => !v)}
-        onToggleAbout={() => setShowAbout((v) => !v)}
+        onToggleStructures={() => {
+          setShowStructures((v) => !v)
+          setShowExamples(false)
+        }}
+        onToggleExamples={() => {
+          setShowExamples((v) => !v)
+          setShowStructures(false)
+        }}
       />
 
       {showSettings && (
@@ -174,13 +183,27 @@ function App() {
       {showStructures && (
         <StructuresPanel
           onClose={() => setShowStructures(false)}
-          onLoadExample={handleLoadExample}
           showAllSyllableCurves={settings.showAllSyllableCurves}
           onToggleShowAllSyllableCurves={(v) => update({ showAllSyllableCurves: v })}
         />
       )}
 
+      {showExamples && <ExamplesPanel onClose={() => setShowExamples(false)} onLoadExample={handleLoadExample} />}
+
       {showAbout && <AboutPanel onClose={() => setShowAbout(false)} />}
+
+      <button
+        className="fixed right-3 bottom-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-[var(--paper-bg)] text-stone-500 shadow-md hover:bg-stone-100 hover:text-stone-800 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
+        onClick={() => setShowAbout((v) => !v)}
+        title="Quant a"
+        aria-label="Quant a"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5" aria-hidden="true">
+          <circle cx="12" cy="12" r="8.25" />
+          <path d="M12 11v5.5" strokeLinecap="round" />
+          <circle cx="12" cy="8" r="0.75" fill="currentColor" stroke="none" />
+        </svg>
+      </button>
 
       <main className="mx-auto w-full max-w-3xl flex-1 overflow-auto px-4 py-6 sm:px-6 sm:py-8">
         <CatalanEditor
