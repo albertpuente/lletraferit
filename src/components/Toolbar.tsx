@@ -127,7 +127,7 @@ export function Toolbar({
 function Logo() {
   return (
     <div className="flex shrink-0 items-center select-none" title="Lletraferit">
-      <span className="font-serif text-lg italic tracking-tight text-stone-900 dark:text-neutral-100">
+      <span className="font-serif text-base italic tracking-tight text-stone-900 dark:text-neutral-100">
         Lletra<span className="text-red-700 dark:text-red-400">ferit</span>
       </span>
     </div>

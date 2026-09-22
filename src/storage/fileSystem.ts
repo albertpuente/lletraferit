@@ -89,6 +89,13 @@ export function downloadAsFile(name: string, content: string): void {
   const a = document.createElement('a')
   a.href = url
   a.download = name
+  // Must be attached to the DOM for some mobile browsers/WebViews to honor
+  // the click, and the object URL must outlive the click: mobile Chrome
+  // processes the download asynchronously, so revoking the URL right away
+  // (as opposed to on the next tick) races the actual blob read and yields
+  // a 0-byte file on Android.
+  document.body.appendChild(a)
   a.click()
-  URL.revokeObjectURL(url)
+  a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 30_000)
 }
