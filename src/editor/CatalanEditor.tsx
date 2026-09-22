@@ -9,7 +9,7 @@ import { wordClickExtension } from './extensions/wordClick'
 import type { WordClickInfo } from './extensions/wordClick'
 import { typingAnimation } from './extensions/typingAnimation'
 import { rhymeHighlight, setHighlightedRhymeGroup } from './extensions/rhymeHighlight'
-import { syllableCurves, setSyllableCurvesLine } from './extensions/syllableCurves'
+import { syllableCurves, setSyllableCurvesLine, setShowAllSyllableCurves } from './extensions/syllableCurves'
 import { findWordTokens } from './tokenize'
 import type { SpellChecker } from '../spellcheck/client'
 import type { CatalanVariant } from '../engine/types'
@@ -20,15 +20,16 @@ function createBaseTheme(dark: boolean, fontSize: number) {
   return EditorView.theme(
     {
       '&': {
-        fontSize: `${fontSize}px`,
+        fontSize: `calc(${fontSize}px * var(--editor-font-scale, 1))`,
         backgroundColor: 'transparent',
-        color: dark ? '#f5f5f5' : '#1c1917',
+        color: `var(--editor-text-color, ${dark ? '#f5f5f5' : '#1c1917'})`,
       },
       '.cm-content': {
-        fontFamily: "'iA Writer Quattro', 'Georgia', serif",
+        fontFamily: 'var(--font-editor)',
+        letterSpacing: 'var(--editor-letter-spacing)',
         lineHeight: '2',
         padding: '8px 0',
-        caretColor: dark ? '#f5f5f5' : '#1c1917',
+        caretColor: `var(--editor-text-color, ${dark ? '#f5f5f5' : '#1c1917'})`,
       },
       '.cm-scroller': { overflow: 'auto' },
       '.cm-gutters': {
@@ -102,6 +103,9 @@ export interface CatalanEditorProps {
   /** 0-based line whose metrical syllables should be underlined with curves,
    * or null to clear them (e.g. when the metrics popup closes). */
   activeMetricsLine: number | null
+  /** When true, every verse's metrical syllables are permanently underlined
+   * with curves, overriding `activeMetricsLine`'s single-line behavior. */
+  showAllSyllableCurves: boolean
   handleRef?: MutableRefObject<CatalanEditorHandle | null>
 }
 
@@ -121,6 +125,7 @@ export function CatalanEditor({
   onMetricsClick,
   highlightedRhymeGroup,
   activeMetricsLine,
+  showAllSyllableCurves,
   handleRef,
 }: CatalanEditorProps) {
   const viewRef = useRef<EditorView | null>(null)
@@ -145,12 +150,22 @@ export function CatalanEditor({
   }, [variant])
 
   useEffect(() => {
-    viewRef.current?.dispatch({ effects: setHighlightedRhymeGroup.of(highlightedRhymeGroup) })
-  }, [highlightedRhymeGroup])
+    viewRef.current?.dispatch({
+      effects: setHighlightedRhymeGroup.of(
+        highlightedRhymeGroup !== null && activeMetricsLine !== null
+          ? { groupIndex: highlightedRhymeGroup, lineIndex: activeMetricsLine }
+          : null,
+      ),
+    })
+  }, [highlightedRhymeGroup, activeMetricsLine])
 
   useEffect(() => {
     viewRef.current?.dispatch({ effects: setSyllableCurvesLine.of(activeMetricsLine) })
   }, [activeMetricsLine])
+
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: setShowAllSyllableCurves.of(showAllSyllableCurves) })
+  }, [showAllSyllableCurves])
 
   useEffect(() => {
     if (!spellChecker) {

@@ -12,6 +12,7 @@ import { MetricsPopup } from './components/MetricsPopup'
 import { useDocument } from './hooks/useDocument'
 import { useSettings } from './hooks/useSettings'
 import { useTheme } from './hooks/useTheme'
+import { useVisualTheme } from './hooks/useVisualTheme'
 import { usePaperTexture } from './hooks/usePaperTexture'
 import { SpellChecker } from './spellcheck/client'
 import { getSynonyms, preloadSynonyms } from './synonyms/client'
@@ -46,6 +47,7 @@ function App() {
   const doc = useDocument()
   const { settings, update, loaded } = useSettings()
   const dark = useTheme(settings.theme)
+  useVisualTheme(settings.visualTheme)
   usePaperTexture(settings.paperTexture)
   const [showSettings, setShowSettings] = useState(false)
   const [showStructures, setShowStructures] = useState(false)
@@ -129,12 +131,9 @@ function App() {
     function onKeyDown(e: KeyboardEvent) {
       const mod = e.metaKey || e.ctrlKey
       if (!mod) return
-      if (e.key === 's' && !e.shiftKey) {
+      if (e.key === 's') {
         e.preventDefault()
         doc.saveDocument()
-      } else if (e.key === 's' && e.shiftKey) {
-        e.preventDefault()
-        doc.saveDocumentAs()
       } else if (e.key === 'o') {
         e.preventDefault()
         doc.openDocument()
@@ -147,6 +146,10 @@ function App() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [doc])
 
+  async function handleCopy() {
+    await navigator.clipboard.writeText(doc.content)
+  }
+
   return (
     <div className="relative flex h-full flex-col">
       <Toolbar
@@ -157,7 +160,7 @@ function App() {
         onNew={doc.newDocument}
         onOpen={doc.openDocument}
         onSave={doc.saveDocument}
-        onSaveAs={doc.saveDocumentAs}
+        onCopy={handleCopy}
         onReconnect={doc.reconnectFile}
         onToggleSettings={() => setShowSettings((v) => !v)}
         onToggleStructures={() => setShowStructures((v) => !v)}
@@ -169,7 +172,12 @@ function App() {
       )}
 
       {showStructures && (
-        <StructuresPanel onClose={() => setShowStructures(false)} onLoadExample={handleLoadExample} />
+        <StructuresPanel
+          onClose={() => setShowStructures(false)}
+          onLoadExample={handleLoadExample}
+          showAllSyllableCurves={settings.showAllSyllableCurves}
+          onToggleShowAllSyllableCurves={(v) => update({ showAllSyllableCurves: v })}
+        />
       )}
 
       {showAbout && <AboutPanel onClose={() => setShowAbout(false)} />}
@@ -187,6 +195,7 @@ function App() {
           onMetricsClick={handleMetricsClick}
           highlightedRhymeGroup={metricsPopup?.rhymeGroupIndex ?? null}
           activeMetricsLine={metricsPopup?.lineIndex ?? null}
+          showAllSyllableCurves={settings.showAllSyllableCurves}
           handleRef={editorHandleRef}
         />
       </main>

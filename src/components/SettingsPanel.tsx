@@ -22,7 +22,7 @@ export function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProp
   return (
     <div
       ref={ref}
-      className="absolute right-2 left-2 top-14 z-10 max-h-[80vh] overflow-auto rounded-lg border border-stone-200 bg-[#f8f5ee] p-4 shadow-lg sm:left-auto sm:right-4 sm:w-72 dark:border-neutral-800 dark:bg-neutral-900"
+      className="absolute right-2 left-2 top-14 z-10 max-h-[80vh] overflow-auto rounded-lg border border-stone-200 bg-[var(--paper-bg)] p-4 shadow-lg sm:left-auto sm:right-4 sm:w-72 dark:border-neutral-800 dark:bg-neutral-900"
     >
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-medium text-stone-900 dark:text-neutral-100">Configuració</h2>
@@ -57,6 +57,20 @@ export function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProp
           <option value="system">Sistema</option>
           <option value="light">Clar</option>
           <option value="dark">Fosc</option>
+        </select>
+      </label>
+
+      <label className="mb-3 block text-xs text-stone-500 dark:text-neutral-400">
+        Estil
+        <select
+          className="mt-1 w-full rounded-md border border-stone-200 bg-transparent px-2 py-1.5 text-base text-stone-900 sm:text-sm dark:border-neutral-700 dark:text-neutral-100"
+          value={settings.visualTheme}
+          onChange={(e) => onChange({ visualTheme: e.target.value as AppSettings['visualTheme'] })}
+        >
+          <option value="classic">Clàssic</option>
+          <option value="typewriter">Màquina d'escriure</option>
+          <option value="modern">Modern</option>
+          <option value="calligraphy">Cal·ligràfic</option>
         </select>
       </label>
 

@@ -1,3 +1,10 @@
+/* Cookie: a Google Font used specifically for the "Cal·ligràfic" theme's
+ * script look (see .theme-calligraphy below). Unlike every other theme's
+ * font stack, this one is NOT a system/offline font — it requires a
+ * network fetch the first time it's used, same as the synonyms dictionary
+ * build step elsewhere in this app. Must come before @import "tailwindcss"
+ * below: CSS requires all @import rules to precede any other rule. */
+@import url('https://fonts.googleapis.com/css2?family=Cookie&display=swap');
 @import "tailwindcss";
 
 /* Dark mode is toggled manually (via a `.dark` class on <html>, driven by
@@ -6,10 +13,78 @@
 
 :root {
   color-scheme: light;
+
+  /* "Clàssic" visual theme (default): the app's original literary look —
+     warm cream paper, a serif editor font, crimson accent. Overridden per-
+     theme below (see Settings > "Estil"). The app's own logo/brand mark
+     (see Toolbar.tsx's Logo component) intentionally does NOT use any of
+     these variables and stays visually identical across all themes.
+     Dark-mode variants only touch --accent, since paper/panel backgrounds
+     already switch to flat neutral grays in dark mode regardless of theme
+     (see index.css's `dark:bg-neutral-*` utilities). */
+  --font-editor: 'iA Writer Quattro', 'Georgia', serif;
+  --editor-letter-spacing: normal;
+  --editor-font-scale: 1;
+  /** Editor text color; overridden per-theme below when a theme wants ink
+   * that isn't simply "dark text in light mode / light text in dark mode"
+   * (e.g. the calligraphy theme's crimson ink). Falls back to the app's
+   * original hardcoded colors otherwise (see CatalanEditor.tsx). */
+  --editor-text-color: #1c1917;
+  --accent: #b91c1c;
+  --paper-bg: #f8f5ee;
 }
 
 :root.dark {
   color-scheme: dark;
+  --editor-text-color: #f5f5f5;
+  --accent: #f87171;
+}
+
+/* "Màquina d'escriure": a vintage typewriter personality — narrow monospace
+   type, aged greige paper, and a sepia/ink-ribbon accent instead of
+   crimson. Prefers narrower system monospace fonts (Menlo/Consolas/etc.)
+   over the much wider "Courier New", with slightly tightened tracking and
+   a smaller scale on top, since monospace glyphs otherwise run noticeably
+   wider than the classic serif at the same point size. */
+.theme-typewriter {
+  --font-editor: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --editor-letter-spacing: -0.02em;
+  --editor-font-scale: 0.82;
+  --accent: #92400e;
+  --paper-bg: #efe7d4;
+}
+.theme-typewriter.dark {
+  --accent: #fb923c;
+}
+
+/* "Modern": a clean, minimal personality — a plain sans-serif editor font,
+   a cool off-white paper, and a blue accent instead of crimson. */
+.theme-modern {
+  --font-editor: 'Inter', -apple-system, 'Helvetica Neue', Arial, ui-sans-serif, system-ui, sans-serif;
+  --editor-letter-spacing: normal;
+  --accent: #2563eb;
+  --paper-bg: #f1f3f5;
+}
+.theme-modern.dark {
+  --accent: #60a5fa;
+}
+
+/* "Cal·ligràfic": an elegant, formal handwritten personality — the
+   "Cookie" script Google Font, a clear warm-white paper, and dark, solid
+   crimson-black ink text (no shadow/glow — plain, still text). Cookie
+   renders noticeably smaller/tighter than the classic serif at the same
+   point size, so scaled up more than the other themes. */
+.theme-calligraphy {
+  --font-editor: 'Cookie', 'Segoe Print', 'Bradley Hand', 'Noteworthy', cursive;
+  --editor-letter-spacing: 0.01em;
+  --editor-font-scale: 1.6;
+  --editor-text-color: #3b0a0a;
+  --accent: #3b0a0a;
+  --paper-bg: #fdf8ef;
+}
+.theme-calligraphy.dark {
+  --editor-text-color: #fda4af;
+  --accent: #fda4af;
 }
 
 html,
@@ -32,8 +107,9 @@ body {
   font-family:
     ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   /* A warm cream tone instead of pure white/gray gives the light theme a
-     cozier, paper-like feel; dark mode is unaffected. */
-  @apply bg-[#f8f5ee] text-stone-900 dark:bg-neutral-950 dark:text-neutral-100;
+     cozier, paper-like feel; dark mode is unaffected. The exact tone comes
+     from the active visual theme's --paper-bg (see theme classes above). */
+  @apply bg-[var(--paper-bg)] text-stone-900 dark:bg-neutral-950 dark:text-neutral-100;
 }
 
 /* Optional fine-grained paper texture (Settings > "Textura de paper"),
@@ -93,13 +169,14 @@ body.paper-texture {
   display: inline-block;
 }
 
-/* A clear, crimson triple-blink drawing attention to the Structures button
- * every time the app is opened (see Toolbar.tsx), so it stays a useful
- * recurring nudge toward the composition-help panel. Runs three times then
- * stops automatically (`onAnimationEnd` in Toolbar.tsx removes the class). */
+/* A clear, triple-blink (in the active theme's accent color) drawing
+ * attention to the Structures button every time the app is opened (see
+ * Toolbar.tsx), so it stays a useful recurring nudge toward the
+ * composition-help panel. Runs three times then stops automatically
+ * (`onAnimationEnd` in Toolbar.tsx removes the class). */
 @keyframes structures-hint {
   0%, 100% { color: inherit; }
-  25%, 75% { color: #be123c; }
+  25%, 75% { color: var(--accent); }
 }
 
 .animate-structures-hint {

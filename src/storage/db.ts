@@ -11,16 +11,25 @@ export interface DocumentRecord {
   fileHandle?: FileSystemFileHandle
 }
 
+export type VisualTheme = 'classic' | 'typewriter' | 'modern' | 'calligraphy'
+
 export interface AppSettings {
   key: 'settings'
   variant: CatalanVariant
   autosaveIntervalMs: number
   theme: 'light' | 'dark' | 'system'
+  /** Overall visual "personality" (color accent, editor/logo font) —
+   * independent of the light/dark setting above. */
+  visualTheme: VisualTheme
   lastDocId: string | null
   paperTexture: boolean
   spellcheckEnabled: boolean
   /** Editor text size in pixels; adjustable in Settings, persisted across restarts. */
   fontSize: number
+  /** When true, every verse's metrical syllables are permanently underlined
+   * with curves (not just the currently-clicked one) — toggled from the
+   * Structures panel. */
+  showAllSyllableCurves: boolean
   /** User-added words (lowercased) that are always treated as correctly
    * spelled, regardless of what the dictionary says. */
   ignoredWords: string[]
@@ -79,10 +88,12 @@ export const DEFAULT_SETTINGS: AppSettings = {
   variant: 'central',
   autosaveIntervalMs: 2000,
   theme: 'light',
+  visualTheme: 'classic',
   lastDocId: null,
   paperTexture: false,
   spellcheckEnabled: true,
   fontSize: FONT_SIZE_DEFAULT,
+  showAllSyllableCurves: false,
   ignoredWords: [],
 }
 

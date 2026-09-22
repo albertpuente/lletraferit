@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { SaveStatus } from '../hooks/useDocument'
 
 const STRUCTURES_HINT_DELAY_MS = 1000
+const COPIED_TOAST_DURATION_MS = 2000
 
 const STATUS_LABEL: Record<SaveStatus, string> = {
   idle: '',
@@ -19,7 +20,9 @@ export interface ToolbarProps {
   onNew: () => void
   onOpen: () => void
   onSave: () => void
-  onSaveAs: () => void
+  /** Copies the document's text to the clipboard; should reject/throw on
+   * failure so the confirmation toast is only shown on genuine success. */
+  onCopy: () => Promise<void>
   onReconnect: () => void
   onToggleSettings: () => void
   onToggleStructures: () => void
@@ -34,7 +37,7 @@ export function Toolbar({
   onNew,
   onOpen,
   onSave,
-  onSaveAs,
+  onCopy,
   onReconnect,
   onToggleSettings,
   onToggleStructures,
@@ -46,6 +49,18 @@ export function Toolbar({
   // a one-off hint. Delayed so it doesn't fire before the page has settled.
   const [structuresHintPending, setStructuresHintPending] = useState(true)
   const [showStructuresHint, setShowStructuresHint] = useState(false)
+  const [showCopiedToast, setShowCopiedToast] = useState(false)
+
+  async function handleCopy() {
+    try {
+      await onCopy()
+      setShowCopiedToast(true)
+      window.setTimeout(() => setShowCopiedToast(false), COPIED_TOAST_DURATION_MS)
+    } catch {
+      // Clipboard write failed (e.g. permission denied): fail silently
+      // rather than showing a confirmation for something that didn't happen.
+    }
+  }
 
   useEffect(() => {
     if (!structuresHintPending) return
@@ -58,8 +73,25 @@ export function Toolbar({
     setShowStructuresHint(false)
   }
 
+  // "Desat" is only meaningful for documents linked to a real file on disk
+  // (hasFileHandle): a document that only lives in the app's local document
+  // store hasn't been saved anywhere the user chose, so showing "Desat" for
+  // it would be misleading reassurance. Other statuses (saving/error/needs
+  // reconnecting) are still shown regardless, since those are always worth
+  // surfacing.
+  const statusLabel = status === 'saved' && !hasFileHandle ? '' : STATUS_LABEL[status]
+
   return (
-    <header className="flex flex-wrap items-center gap-2 border-b border-stone-200 px-3 py-2 sm:gap-3 sm:px-4 sm:py-2.5 dark:border-neutral-800">
+    <header className="relative flex flex-wrap items-center gap-2 border-b border-stone-200 px-3 py-2 sm:gap-3 sm:px-4 sm:py-2.5 dark:border-neutral-800">
+      {showCopiedToast && (
+        <div
+          role="status"
+          className="pointer-events-none absolute top-full left-1/2 z-30 mt-2 -translate-x-1/2 rounded-full bg-emerald-600 px-3 py-1 text-xs font-medium text-white shadow-lg"
+        >
+          Copiat al porta-retalls
+        </div>
+      )}
+
       <Logo />
 
       <div className="mx-1 hidden h-5 w-px bg-stone-200 sm:block dark:bg-neutral-800" aria-hidden="true" />
@@ -74,8 +106,8 @@ export function Toolbar({
         <ToolbarButton onClick={onSave} title="Desa (⌘S)">
           Desa
         </ToolbarButton>
-        <ToolbarButton onClick={onSaveAs} title="Anomena i desa (⇧⌘S)">
-          Anomena i desa
+        <ToolbarButton onClick={handleCopy} title="Copia el text al porta-retalls">
+          Copia
         </ToolbarButton>
       </div>
 
@@ -93,10 +125,10 @@ export function Toolbar({
               className="touch-manipulation rounded-full bg-amber-100 px-2.5 py-1 text-amber-800 hover:bg-amber-200 dark:bg-amber-950 dark:text-amber-300"
               onClick={onReconnect}
             >
-              {STATUS_LABEL[status]}
+              {statusLabel}
             </button>
           ) : (
-            <span>{STATUS_LABEL[status]}</span>
+            <span>{statusLabel}</span>
           )}
         </div>
 
@@ -125,9 +157,12 @@ export function Toolbar({
 }
 
 function Logo() {
+  // The app's brand mark intentionally stays visually identical across all
+  // visual themes (see Settings > "Estil" and index.css), unlike the editor
+  // font/accent color/paper background, which do vary per theme.
   return (
     <div className="flex shrink-0 items-center select-none" title="Lletraferit">
-      <span className="font-serif text-base italic tracking-tight text-stone-900 dark:text-neutral-100">
+      <span className="font-serif text-xl italic tracking-tight text-stone-900 dark:text-neutral-100">
         Lletra<span className="text-red-700 dark:text-red-400">ferit</span>
       </span>
     </div>

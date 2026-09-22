@@ -109,4 +109,19 @@ describe('computeRhymeScheme', () => {
     const scheme = computeRhymeScheme(verses)
     expect(scheme[0].label.toUpperCase()).toBe(scheme[1].label.toUpperCase())
   })
+
+  it('rhymes words where a final "t" is silent between a consonant and the plural "-s"', () => {
+    // "amants" is pronounced [əˈmans] in Catalan (the "t" between "n" and
+    // the plural "-s" is silent), so it genuinely rhymes with "mans"; same
+    // pattern for "molts" ([mols]) and "cols".
+    const amantsMans = [analyzeVerse('dos amants'), analyzeVerse('unes mans')]
+    expect(computeRhymeScheme(amantsMans)[0].label.toUpperCase()).toBe(
+      computeRhymeScheme(amantsMans)[1].label.toUpperCase(),
+    )
+
+    const moltsCols = [analyzeVerse('en menjava molts'), analyzeVerse('unes bones cols')]
+    expect(computeRhymeScheme(moltsCols)[0].label.toUpperCase()).toBe(
+      computeRhymeScheme(moltsCols)[1].label.toUpperCase(),
+    )
+  })
 })

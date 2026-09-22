@@ -26,6 +26,13 @@ export function normalizePhoneticTail(tail: string, variant: CatalanVariant = 'c
   r = r.replace(/ç/g, 's')
   r = r.replace(/[^a-z]/g, '')
 
+  // A word-final "t" sitting between another consonant and the plural "-s"
+  // is not pronounced in Catalan (e.g. "amants" -> [əˈmans], "molts" ->
+  // [mols]), so such words rhyme with ones ending directly in that
+  // consonant + "s" (e.g. "amants"/"mans", "molts"/"cols"). Applies to both
+  // variants, unlike the final-r elision below, which is central-only.
+  r = r.replace(/([bcdfghjklmnpqrstvwxyz])ts$/, '$1s')
+
   // Central/Oriental Catalan famously elides a word-final "r" in everyday
   // speech and song (e.g. "senyor" -> [səˈɲo], "cantar" -> [kanˈta]), so
   // rhymes routinely pair r-ending words with vowel-ending ones (e.g. Salvat-

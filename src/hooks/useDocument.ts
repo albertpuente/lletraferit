@@ -1,18 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import {
-  downloadAsFile,
-  isFileSystemAccessSupported,
-  openFile,
-  pickSaveHandle,
-  verifyPermission,
-  writeToHandle,
-} from '../storage/fileSystem'
+import { downloadAsFile, isFileSystemAccessSupported, openFile, verifyPermission, writeToHandle } from '../storage/fileSystem'
 import { getMostRecentDocument, saveSettings, upsertDocument } from '../storage/db'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'needs-permission' | 'error'
 
 const UNTITLED_NAME = 'Sense titol.txt'
-const AUTOSAVE_DELAY_MS = 1500
+const AUTOSAVE_DELAY_MS = 5000
 
 function createId(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -22,7 +15,7 @@ function createId(): string {
 
 export function useDocument() {
   const [id, setId] = useState<string>(() => createId())
-  const [name, setName] = useState(UNTITLED_NAME)
+  const [name, setNameState] = useState(UNTITLED_NAME)
   const [content, setContentState] = useState('')
   const [status, setStatus] = useState<SaveStatus>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -40,7 +33,7 @@ export function useDocument() {
       const doc = await getMostRecentDocument()
       if (doc) {
         setId(doc.id)
-        setName(doc.name)
+        setNameState(doc.name)
         setContentState(doc.content)
         fileHandleRef.current = doc.fileHandle
         setHasFileHandle(!!doc.fileHandle)
@@ -90,15 +83,38 @@ export function useDocument() {
     }
   }, [])
 
+  // Schedules a debounced autosave, resetting the 5s inactivity window on
+  // every call — shared by both content and name edits so renaming the
+  // document autosaves the same way typing does.
+  const scheduleAutosave = useCallback(
+    (docId: string, docName: string, docContent: string) => {
+      if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
+      autosaveTimer.current = setTimeout(() => {
+        persist(docId, docName, docContent)
+      }, AUTOSAVE_DELAY_MS)
+    },
+    [persist],
+  )
+
   const setContent = useCallback(
     (next: string) => {
       setContentState(next)
-      if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
-      autosaveTimer.current = setTimeout(() => {
-        persist(id, name, next)
-      }, AUTOSAVE_DELAY_MS)
+      // Hide the "Desat" label immediately: the new content is genuinely
+      // unsaved until the pending autosave (or an explicit save) completes,
+      // so showing a stale "saved" status would be misleading.
+      setStatus('idle')
+      scheduleAutosave(id, name, next)
     },
-    [id, name, persist],
+    [id, name, scheduleAutosave],
+  )
+
+  const setName = useCallback(
+    (next: string) => {
+      setNameState(next)
+      setStatus('idle')
+      scheduleAutosave(id, next, content)
+    },
+    [id, content, scheduleAutosave],
   )
 
   const newDocument = useCallback(() => {
@@ -107,7 +123,7 @@ export function useDocument() {
     fileHandleRef.current = undefined
     setHasFileHandle(false)
     setId(newId)
-    setName(UNTITLED_NAME)
+    setNameState(UNTITLED_NAME)
     setContentState('')
     setStatus('saved')
     persist(newId, UNTITLED_NAME, '')
@@ -121,7 +137,7 @@ export function useDocument() {
     fileHandleRef.current = opened.handle
     setHasFileHandle(!!opened.handle)
     setId(newId)
-    setName(opened.name)
+    setNameState(opened.name)
     setContentState(opened.content)
     // showOpenFilePicker only grants read permission by default; request
     // readwrite immediately, while we're still within the user gesture from
@@ -135,31 +151,18 @@ export function useDocument() {
     await persist(newId, opened.name, opened.content)
   }, [persist])
 
-  const saveDocumentAs = useCallback(async () => {
-    if (isFileSystemAccessSupported()) {
-      const handle = await pickSaveHandle(name)
-      if (!handle) return
-      fileHandleRef.current = handle
-      setHasFileHandle(true)
-      const newName = handle.name
-      setName(newName)
-      await persist(id, newName, content)
-      return
-    }
-    downloadAsFile(name, content)
-  }, [content, id, name, persist])
-
   const saveDocument = useCallback(async () => {
+    // Always a plain, immediate save — the same persist() an autosave
+    // would trigger — never a file picker/dialog. A document only gets
+    // linked to a real file via "Obre" (opening an existing file); "Desa"
+    // just writes to that same file if one is linked (see persist()),
+    // or otherwise only to the app's local document store.
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
-    if (!fileHandleRef.current && isFileSystemAccessSupported()) {
-      await saveDocumentAs()
-      return
-    }
     if (!isFileSystemAccessSupported()) {
       downloadAsFile(name, content)
     }
     await persist(id, name, content)
-  }, [content, id, name, persist, saveDocumentAs])
+  }, [content, id, name, persist])
 
   const reconnectFile = useCallback(async () => {
     if (!fileHandleRef.current) return
@@ -206,7 +209,6 @@ export function useDocument() {
     newDocument,
     openDocument,
     saveDocument,
-    saveDocumentAs,
     reconnectFile,
   }
 }

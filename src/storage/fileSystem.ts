@@ -82,6 +82,34 @@ export async function pickSaveHandle(suggestedName: string): Promise<FileSystemF
   }
 }
 
+export interface SaveHandleResult {
+  handle: FileSystemFileHandle
+  name: string
+}
+
+/**
+ * Prompts the user to choose a save location and immediately verifies (or
+ * requests) readwrite permission on the resulting handle, before returning
+ * it — mirroring the same immediate-verification pattern already used for
+ * open handles (see `openDocument` in useDocument.ts). A handle from
+ * `showSaveFilePicker` is not reliably pre-granted permission in every
+ * browser; deferring the permission check to a later, separately-awaited
+ * step (as an earlier version of this code did, via `persist`) introduces
+ * enough extra async hops for the browser to no longer treat the check as
+ * connected to the user's original gesture, so `requestPermission` quietly
+ * fails instead of prompting — which showed up as the app immediately
+ * flagging a brand new file as "needs reconnecting" right after saving it.
+ * Returns null if the user cancels the picker, or if permission is not
+ * granted.
+ */
+export async function createSaveHandle(suggestedName: string): Promise<SaveHandleResult | null> {
+  const handle = await pickSaveHandle(suggestedName)
+  if (!handle) return null
+  const granted = await verifyPermission(handle)
+  if (!granted) return null
+  return { handle, name: handle.name }
+}
+
 /** Fallback save: triggers a browser download of `content` as `name`. */
 export function downloadAsFile(name: string, content: string): void {
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })

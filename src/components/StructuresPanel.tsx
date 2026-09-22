@@ -8,6 +8,8 @@ import { useClickOutside } from '../hooks/useClickOutside'
 export interface StructuresPanelProps {
   onClose: () => void
   onLoadExample: (title: string, content: string) => void
+  showAllSyllableCurves: boolean
+  onToggleShowAllSyllableCurves: (value: boolean) => void
 }
 
 function VerseBadge({ verse }: { verse: StructureVerse }) {
@@ -22,14 +24,19 @@ function VerseBadge({ verse }: { verse: StructureVerse }) {
   )
 }
 
-export function StructuresPanel({ onClose, onLoadExample }: StructuresPanelProps) {
+export function StructuresPanel({
+  onClose,
+  onLoadExample,
+  showAllSyllableCurves,
+  onToggleShowAllSyllableCurves,
+}: StructuresPanelProps) {
   const ref = useRef<HTMLDivElement>(null)
   useClickOutside(ref, onClose)
 
   return (
     <div
       ref={ref}
-      className="absolute right-2 left-2 top-14 z-10 max-h-[75vh] overflow-auto rounded-lg border border-stone-200 bg-[#f8f5ee] p-4 shadow-lg sm:left-auto sm:right-4 sm:w-96 dark:border-neutral-800 dark:bg-neutral-900"
+      className="absolute right-2 left-2 top-14 z-10 max-h-[75vh] overflow-auto rounded-lg border border-stone-200 bg-[var(--paper-bg)] p-4 shadow-lg sm:left-auto sm:right-4 sm:w-96 dark:border-neutral-800 dark:bg-neutral-900"
     >
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-medium text-stone-900 dark:text-neutral-100">Estructures</h2>
@@ -41,6 +48,16 @@ export function StructuresPanel({ onClose, onLoadExample }: StructuresPanelProps
           ✕
         </button>
       </div>
+
+      <label className="mb-4 flex items-center justify-between rounded-md border border-stone-200 px-3 py-2 text-xs text-stone-600 dark:border-neutral-700 dark:text-neutral-300">
+        <span>Mostra les corbes de síl·labes</span>
+        <input
+          type="checkbox"
+          className="h-4 w-4 shrink-0 accent-stone-600 dark:accent-neutral-400"
+          checked={showAllSyllableCurves}
+          onChange={(e) => onToggleShowAllSyllableCurves(e.target.checked)}
+        />
+      </label>
 
       <p className="mb-4 text-xs leading-relaxed text-stone-400 dark:text-neutral-500">
         Suggeriments clàssics de mètrica i rima. El nombre indica les síl·labes del vers; la lletra, el

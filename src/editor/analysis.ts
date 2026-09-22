@@ -27,6 +27,10 @@ export interface LineInfo {
   /** Character ranges (within the line) of every syllable counted toward
    * `syllableCount`, sinalefa-fused syllables merged into one range. */
   metricalSyllables: { from: number; to: number }[]
+  /** Whether this line is a blank stanza separator, as opposed to a verse.
+   * Used to find stanza boundaries (e.g. to scope rhyme highlighting to a
+   * single stanza) without re-deriving it from the raw line text. */
+  isBlank: boolean
 }
 
 const EMPTY_RHYME: RhymeSchemeEntry = { groupIndex: null, label: '' }
@@ -52,6 +56,7 @@ export function analyzeDocument(text: string, variant: CatalanVariant = 'central
         rhymeExplanation: explainRhyme(rhyme),
         rhymeRange: verse.rhymeRange,
         metricalSyllables: verse.metricalSyllables,
+        isBlank: false,
       }
     })
     stanzaLineIndices = []
@@ -67,6 +72,7 @@ export function analyzeDocument(text: string, variant: CatalanVariant = 'central
         rhymeExplanation: '',
         rhymeRange: null,
         metricalSyllables: [],
+        isBlank: true,
       }
       return
     }

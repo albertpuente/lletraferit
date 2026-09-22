@@ -3,13 +3,23 @@ import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import { StateEffect, StateField } from '@codemirror/state'
 import type { Extension } from '@codemirror/state'
 import { lineInfoField } from './lineInfo'
+import type { LineInfo } from '../analysis'
+
+export interface HighlightedRhyme {
+  groupIndex: number
+  /** 0-based line index of the clicked verse, so the highlight can be
+   * scoped to just its stanza (see `stanzaRangeAround`) rather than every
+   * verse in the whole document that happens to share the same group
+   * index, since that index is only unique within a stanza. */
+  lineIndex: number
+}
 
 /** Which rhyme group (if any) to highlight, set when the user clicks a
  * verse's syllable/rhyme gutter badge and cleared when the metrics popup
  * closes. */
-export const setHighlightedRhymeGroup = StateEffect.define<number | null>()
+export const setHighlightedRhymeGroup = StateEffect.define<HighlightedRhyme | null>()
 
-export const highlightedRhymeGroupField = StateField.define<number | null>({
+export const highlightedRhymeGroupField = StateField.define<HighlightedRhyme | null>({
   create: () => null,
   update(value, tr) {
     for (const effect of tr.effects) {
@@ -19,14 +29,29 @@ export const highlightedRhymeGroupField = StateField.define<number | null>({
   },
 })
 
+/** Returns the [start, end] inclusive 0-based line-index range of the
+ * stanza (contiguous run of non-blank lines) containing `lineIndex`, per
+ * the same "estrofa" definition used by `analyzeDocument`. */
+function stanzaRangeAround(infos: LineInfo[], lineIndex: number): [number, number] {
+  let start = lineIndex
+  while (start > 0 && !infos[start - 1].isBlank) start--
+  let end = lineIndex
+  while (end < infos.length - 1 && !infos[end + 1].isBlank) end++
+  return [start, end]
+}
+
 function buildDecorations(view: EditorView): DecorationSet {
-  const groupIndex = view.state.field(highlightedRhymeGroupField)
-  if (groupIndex === null) return Decoration.none
+  const highlighted = view.state.field(highlightedRhymeGroupField)
+  if (highlighted === null) return Decoration.none
+  const { groupIndex, lineIndex } = highlighted
 
   const { infos } = view.state.field(lineInfoField)
+  if (lineIndex < 0 || lineIndex >= infos.length) return Decoration.none
+  const [stanzaStart, stanzaEnd] = stanzaRangeAround(infos, lineIndex)
+
   const doc = view.state.doc
   const ranges = []
-  for (let i = 0; i < infos.length && i < doc.lines; i++) {
+  for (let i = stanzaStart; i <= stanzaEnd && i < doc.lines; i++) {
     const info = infos[i]
     if (info.rhyme.groupIndex !== groupIndex || !info.rhymeRange) continue
     const line = doc.line(i + 1)
