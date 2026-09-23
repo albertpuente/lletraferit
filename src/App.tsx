@@ -63,6 +63,7 @@ function App() {
   const [popup, setPopup] = useState<SynonymsPopupState | null>(null)
   const [metricsPopup, setMetricsPopup] = useState<MetricsPopupState | null>(null)
   const [cursorLine, setCursorLine] = useState(0)
+  const [cursorPosition, setCursorPosition] = useState<{ left: number; top: number; bottom: number } | null>(null)
   const { suggestions, loading: suggestionsLoading } = useVerseSuggestions(
     doc.content,
     cursorLine,
@@ -255,6 +256,7 @@ function App() {
             showFootBoundaries={settings.showFootBoundaries}
             showAllStressDots={settings.showAllStressDots}
             onCursorLineChange={handleCursorLineChange}
+            onCursorPositionChange={setCursorPosition}
             handleRef={editorHandleRef}
           />
         </div>
@@ -289,6 +291,7 @@ function App() {
       <VerseSuggestions
         suggestions={suggestions}
         loading={suggestionsLoading}
+        cursorPosition={cursorPosition}
         onSelect={(suggestion) => editorHandleRef.current?.insertAtCursor(suggestion.word, suggestion.replacePrefix)}
       />
     </div>

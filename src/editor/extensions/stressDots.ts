@@ -45,6 +45,9 @@ const DOT_SIZE = 7
  * colliding with the line above. */
 const LINE_GAP = 3
 const CONNECTOR_THICKNESS = 1.5
+/** Length of the visual fade that marks a connector continuing through a
+ * soft-wrapped row boundary. */
+const WRAP_CONNECTOR_FADE_LENGTH = 12
 
 /** The y-coordinate (document-relative) of the shared horizontal center
  * that every dot on this line and its foot-connector line are aligned to. */
@@ -98,26 +101,66 @@ function buildMarkers(view: EditorView): RectangleMarker[] {
     })
 
     // A thin line connecting the dots of each recognized (non-"irregular")
-    // foot with two or more syllables, computed from the real measured
-    // pixel positions of its first and last syllable — unlike wrapping the
-    // underlying text in a bordered <span>, this can't be fragmented or
-    // misaligned by the dot widgets sitting inside the same range. Pushed
-    // into `markers` BEFORE the dots themselves (below), so — per
-    // CodeMirror's layer rendering, which paints markers in array order —
-    // it's painted first and the opaque dots on top of it occlude its
-    // endpoints, reading as a line passing behind the dots rather than
-    // poking out past them.
+    // foot with two or more syllables. Soft-wrapped visual rows are handled
+    // as separate segments: a connector ends cleanly at the wrap and starts
+    // again on the next row, rather than incorrectly drawing through the
+    // empty space between a row's end and the next row's beginning. Dots
+    // themselves remain measured at their real positions, so wrapping never
+    // changes scansion, counts, or which syllables are shown.
     for (const foot of info.metricFeet) {
       if (foot.type === 'irregular' || foot.syllableIndices.length < 2) continue
-      const first = points[foot.syllableIndices[0]]
-      const last = points[foot.syllableIndices[foot.syllableIndices.length - 1]]
-      if (!first || !last || first.left === last.left) continue
-      const centerY = dotRowCenterY(first.top)
-      const left = Math.min(first.left, last.left)
-      const width = Math.abs(last.left - first.left)
-      markers.push(
-        new RectangleMarker('cm-foot-connector', left, centerY - CONNECTOR_THICKNESS / 2, width, CONNECTOR_THICKNESS),
-      )
+      let segmentStart: { left: number; top: number } | null = null
+      let segmentEnd: { left: number; top: number } | null = null
+
+      const drawSegment = () => {
+        if (!segmentStart || !segmentEnd || segmentStart.left === segmentEnd.left) return
+        const centerY = dotRowCenterY(segmentStart.top)
+        const left = Math.min(segmentStart.left, segmentEnd.left)
+        const width = Math.abs(segmentEnd.left - segmentStart.left)
+        markers.push(
+          new RectangleMarker('cm-foot-connector', left, centerY - CONNECTOR_THICKNESS / 2, width, CONNECTOR_THICKNESS),
+        )
+      }
+
+      for (const syllableIndex of foot.syllableIndices) {
+        const point = points[syllableIndex]
+        if (!point) {
+          drawSegment()
+          segmentStart = null
+          segmentEnd = null
+          continue
+        }
+        if (segmentEnd && Math.abs(segmentEnd.top - point.top) > 0.5) {
+          // The foot crosses a soft wrap. End the old visual row with a
+          // short rightward fade, and start the next one with a matching
+          // fade-in just before its first dot. They communicate continuity
+          // without drawing an incorrect line through the wrapped gap.
+          const previousCenterY = dotRowCenterY(segmentEnd.top)
+          const nextCenterY = dotRowCenterY(point.top)
+          markers.push(
+            new RectangleMarker(
+              'cm-foot-connector cm-foot-connector-fade-out',
+              segmentEnd.left,
+              previousCenterY - CONNECTOR_THICKNESS / 2,
+              WRAP_CONNECTOR_FADE_LENGTH,
+              CONNECTOR_THICKNESS,
+            ),
+            new RectangleMarker(
+              'cm-foot-connector cm-foot-connector-fade-in',
+              point.left - WRAP_CONNECTOR_FADE_LENGTH,
+              nextCenterY - CONNECTOR_THICKNESS / 2,
+              WRAP_CONNECTOR_FADE_LENGTH,
+              CONNECTOR_THICKNESS,
+            ),
+          )
+          drawSegment()
+          segmentStart = point
+        } else if (!segmentStart) {
+          segmentStart = point
+        }
+        segmentEnd = point
+      }
+      drawSegment()
     }
 
     for (let i = 0; i < info.metricalSyllables.length; i++) {

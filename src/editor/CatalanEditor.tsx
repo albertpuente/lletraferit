@@ -111,6 +111,12 @@ function createBaseTheme(dark: boolean, fontSize: number) {
         backgroundColor: dark ? '#fff' : '#000',
         pointerEvents: 'none',
       },
+      '.cm-foot-connector-fade-out': {
+        background: `linear-gradient(to right, ${dark ? '#fff' : '#000'}, transparent)`,
+      },
+      '.cm-foot-connector-fade-in': {
+        background: `linear-gradient(to right, transparent, ${dark ? '#fff' : '#000'})`,
+      },
       '.cm-activeLineGutter': {
         backgroundColor: 'transparent',
       },
@@ -127,6 +133,11 @@ function createBaseTheme(dark: boolean, fontSize: number) {
         borderBottom: '2px solid color-mix(in srgb, currentColor 50%, transparent)',
         borderRadius: '0 0 60% 60% / 0 0 45% 45%',
         paddingBottom: '3px',
+        // A mark can split across several visual rows when a long verse
+        // wraps. Clone its curve decoration per fragment so it ends softly
+        // at one row and resumes cleanly below instead of bridging the wrap.
+        boxDecorationBreak: 'clone',
+        WebkitBoxDecorationBreak: 'clone',
       },
       '.cm-metric-foot': {
         backgroundColor: 'color-mix(in srgb, var(--editor-text-color, #78716c) 8%, transparent)',
@@ -170,6 +181,8 @@ export interface CatalanEditorProps {
   showAllStressDots: boolean
   /** Current caret line, used by the asynchronous verse-ending suggestions. */
   onCursorLineChange: (lineIndex: number) => void
+  /** Screen position of the caret, used to anchor suggestion results. */
+  onCursorPositionChange: (position: { left: number; top: number; bottom: number }) => void
   handleRef?: MutableRefObject<CatalanEditorHandle | null>
 }
 
@@ -194,6 +207,7 @@ export function CatalanEditor({
   showFootBoundaries,
   showAllStressDots,
   onCursorLineChange,
+  onCursorPositionChange,
   handleRef,
 }: CatalanEditorProps) {
   const viewRef = useRef<EditorView | null>(null)
@@ -260,6 +274,8 @@ export function CatalanEditor({
         if (!update.docChanged && !update.selectionSet) return
         const cursor = update.state.selection.main.head
         onCursorLineChange(update.state.doc.lineAt(cursor).number - 1)
+        const coords = update.view.coordsAtPos(cursor)
+        if (coords) onCursorPositionChange({ left: coords.left, top: coords.top, bottom: coords.bottom })
       }),
       EditorView.lineWrapping,
     ],
@@ -354,6 +370,10 @@ export function CatalanEditor({
             setShowAllStressDots.of(showAllStressDots),
           ],
         })
+        const cursorCoords = view.coordsAtPos(view.state.selection.main.head)
+        if (cursorCoords) {
+          onCursorPositionChange({ left: cursorCoords.left, top: cursorCoords.top, bottom: cursorCoords.bottom })
+        }
         syncPencilPaperRules(view)
         if (handleRef) {
           handleRef.current = {
