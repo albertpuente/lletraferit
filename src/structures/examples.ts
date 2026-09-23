@@ -93,4 +93,18 @@ Pròdigs de somnis verges no us desvetlleu mai més,
 la dea de l'oblit, damunt vostre vinclada,
 gelosament us sotja i us pren el darrer bes.`,
   },
+  {
+    id: 'exemples-peus-metrics',
+    title: 'Exemples de peus mètrics',
+    attribution: 'Iambe, troqueu, dàctil, amfíbrac i anapest',
+    content: `De dins el pit covard els mots com un estol
+
+És quan dormo que hi veig clar
+
+L’illa de l’últim adéu on es va inclinà el meu migdia
+
+S’agita la pompa llanguent d’una immensa cortina
+
+Va passant entremig de sa gent adormida`,
+  },
 ]

@@ -5,10 +5,11 @@ export interface MetricsPopupProps {
   y: number
   syllableExplanation: string
   rhymeExplanation: string
+  feetExplanation: string
   onClose: () => void
 }
 
-export function MetricsPopup({ x, y, syllableExplanation, rhymeExplanation, onClose }: MetricsPopupProps) {
+export function MetricsPopup({ x, y, syllableExplanation, rhymeExplanation, feetExplanation, onClose }: MetricsPopupProps) {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -42,9 +43,16 @@ export function MetricsPopup({ x, y, syllableExplanation, rhymeExplanation, onCl
       )}
 
       {rhymeExplanation && (
-        <div className="last:mb-0">
+        <div className="mb-2 last:mb-0">
           <div className="mb-1 text-[11px] uppercase tracking-wide text-stone-400 dark:text-neutral-500">Rima</div>
           <p className="text-xs leading-relaxed text-stone-600 dark:text-neutral-300">{rhymeExplanation}</p>
+        </div>
+      )}
+
+      {feetExplanation && (
+        <div className="last:mb-0">
+          <div className="mb-1 text-[11px] uppercase tracking-wide text-stone-400 dark:text-neutral-500">Peus i ritme</div>
+          <p className="text-xs leading-relaxed text-stone-600 dark:text-neutral-300">{feetExplanation}</p>
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { SaveStatus } from '../hooks/useDocument'
 
-const STRUCTURES_HINT_DELAY_MS = 1000
+const INSTRUCTIONS_HINT_DELAY_MS = 1000
 const COPIED_TOAST_DURATION_MS = 2000
 
 export interface ToolbarProps {
@@ -22,7 +22,9 @@ export interface ToolbarProps {
    * failure so the confirmation toast is only shown on genuine success. */
   onCopy: () => Promise<void>
   onToggleSettings: () => void
+  onToggleInstructions: () => void
   onToggleStructures: () => void
+  onTogglePeus: () => void
   onToggleExamples: () => void
 }
 
@@ -37,15 +39,17 @@ export function Toolbar({
   onSave,
   onCopy,
   onToggleSettings,
+  onToggleInstructions,
   onToggleStructures,
+  onTogglePeus,
   onToggleExamples,
 }: ToolbarProps) {
-  // Draws attention to the Structures button with a crimson triple-blink
+  // Draws attention to the Instructions button with a crimson triple-blink
   // shortly after the app loads, every time it's opened (not just the
   // first time ever), so it stays useful as a recurring nudge rather than
   // a one-off hint. Delayed so it doesn't fire before the page has settled.
-  const [structuresHintPending, setStructuresHintPending] = useState(true)
-  const [showStructuresHint, setShowStructuresHint] = useState(false)
+  const [instructionsHintPending, setInstructionsHintPending] = useState(true)
+  const [showInstructionsHint, setShowInstructionsHint] = useState(false)
   const [showCopiedToast, setShowCopiedToast] = useState(false)
 
   async function handleCopy() {
@@ -60,14 +64,14 @@ export function Toolbar({
   }
 
   useEffect(() => {
-    if (!structuresHintPending) return
-    const timer = window.setTimeout(() => setShowStructuresHint(true), STRUCTURES_HINT_DELAY_MS)
+    if (!instructionsHintPending) return
+    const timer = window.setTimeout(() => setShowInstructionsHint(true), INSTRUCTIONS_HINT_DELAY_MS)
     return () => window.clearTimeout(timer)
-  }, [structuresHintPending])
+  }, [instructionsHintPending])
 
-  function dismissStructuresHint() {
-    setStructuresHintPending(false)
-    setShowStructuresHint(false)
+  function dismissInstructionsHint() {
+    setInstructionsHintPending(false)
+    setShowInstructionsHint(false)
   }
 
   // The displayed "name" mirrors the hasFileHandle distinction: a document
@@ -122,14 +126,22 @@ export function Toolbar({
         <div className="ml-auto hidden shrink-0 items-center gap-2 sm:flex">
           <ToolbarIconButton
             onClick={() => {
-              if (structuresHintPending) dismissStructuresHint()
-              onToggleStructures()
+              if (instructionsHintPending) dismissInstructionsHint()
+              onToggleInstructions()
             }}
-            title="Instruccions i estructures poètiques"
-            className={showStructuresHint ? 'animate-structures-hint' : undefined}
-            onAnimationEnd={dismissStructuresHint}
+            title="Instruccions"
+            className={showInstructionsHint ? 'animate-structures-hint' : undefined}
+            onAnimationEnd={dismissInstructionsHint}
           >
-            <BookIcon />
+            <InfoIcon />
+          </ToolbarIconButton>
+
+          <ToolbarIconButton onClick={onToggleStructures} title="Estructures poètiques">
+            <DocumentLinesIcon />
+          </ToolbarIconButton>
+
+          <ToolbarIconButton onClick={onTogglePeus} title="Peus mètrics">
+            <MetronomeIcon />
           </ToolbarIconButton>
 
           <ToolbarIconButton onClick={onToggleExamples} title="Exemples de poemes">
@@ -156,14 +168,22 @@ export function Toolbar({
         <div className="flex shrink-0 items-center gap-2">
           <ToolbarIconButton
             onClick={() => {
-              if (structuresHintPending) dismissStructuresHint()
-              onToggleStructures()
+              if (instructionsHintPending) dismissInstructionsHint()
+              onToggleInstructions()
             }}
-            title="Instruccions i estructures poètiques"
-            className={showStructuresHint ? 'animate-structures-hint' : undefined}
-            onAnimationEnd={dismissStructuresHint}
+            title="Instruccions"
+            className={showInstructionsHint ? 'animate-structures-hint' : undefined}
+            onAnimationEnd={dismissInstructionsHint}
           >
-            <BookIcon />
+            <InfoIcon />
+          </ToolbarIconButton>
+
+          <ToolbarIconButton onClick={onToggleStructures} title="Estructures poètiques">
+            <DocumentLinesIcon />
+          </ToolbarIconButton>
+
+          <ToolbarIconButton onClick={onTogglePeus} title="Peus mètrics">
+            <MetronomeIcon />
           </ToolbarIconButton>
 
           <ToolbarIconButton onClick={onToggleExamples} title="Exemples de poemes">
@@ -263,18 +283,58 @@ const ICON_PROPS = {
   'aria-hidden': true,
 }
 
-function BookIcon() {
+/** Estructures icon: a document/page with multiple horizontal lines,
+ * representing the catalogue of stanza/verse-line templates shown in that
+ * panel (as opposed to Peus mètrics, which is about rhythm, not layout). */
+function DocumentLinesIcon() {
   return (
     <svg {...ICON_PROPS}>
-      <path d="M12 6.5c-1.5-1-3.5-1.5-5.5-1.5-1 0-2 .1-3 .4v13c1-.3 2-.4 3-.4 2 0 4 .5 5.5 1.5V6.5Z" />
-      <path d="M12 6.5c1.5-1 3.5-1.5 5.5-1.5 1 0 2 .1 3 .4v13c-1-.3-2-.4-3-.4-2 0-4 .5-5.5 1.5V6.5Z" />
+      <path d="M6.5 3.5h8l4 4v13a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1Z" />
+      <path d="M14.5 3.5v4h4" />
+      <path d="M8.25 12h7.5" />
+      <path d="M8.25 15.25h7.5" />
+      <path d="M8.25 18.5h4.5" />
     </svg>
   )
 }
 
+/** Instructions icon: a plain info circle, for the panel explaining how to
+ * read the editor's metrics gutter (now also home to the app's About/credits
+ * section). Sized up slightly from the shared default: its circular
+ * artwork fills less of the 24x24 viewBox than e.g. DocumentLinesIcon's
+ * rectangular one, so at the shared size it visually read smaller. */
+function InfoIcon() {
+  return (
+    <svg {...ICON_PROPS} className="h-[22px] w-[22px]">
+      <circle cx="12" cy="12" r="8.25" />
+      <path d="M12 11v5.5" />
+      <circle cx="12" cy="8" r="0.75" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+/** Peus mètrics icon: a metronome — the classic, immediately-recognizable
+ * symbol for rhythm, tempo, and pacing, matching what a metrical foot
+ * describes. The pendulum arm pivots from the base (bottom center) and
+ * swings up to one side, mid-beat, rather than resting straight up. Sized
+ * up slightly, like InfoIcon, since its narrow triangular silhouette fills
+ * less of the viewBox width than a squarer icon does. */
+function MetronomeIcon() {
+  return (
+    <svg {...ICON_PROPS} className="h-[22px] w-[22px]">
+      <path d="M12 4.5 17 20.5 7 20.5Z" />
+      <path d="M8 20.5h8" />
+      <path d="M12 19 16.2 7.3" />
+      <circle cx="16.2" cy="7.3" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+/** Sized up slightly, like InfoIcon/MetronomeIcon: its narrow pennant shape
+ * fills less of the viewBox width than a squarer icon does. */
 function BookmarkIcon() {
   return (
-    <svg {...ICON_PROPS}>
+    <svg {...ICON_PROPS} className="h-[22px] w-[22px]">
       <path d="M7 4.5h10v16l-5-3-5 3Z" />
     </svg>
   )

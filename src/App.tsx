@@ -1,20 +1,22 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CatalanEditor } from './editor/CatalanEditor'
 import type { CatalanEditorHandle } from './editor/CatalanEditor'
 import type { WordClickInfo } from './editor/extensions/wordClick'
 import type { MetricsClickInfo } from './editor/extensions/lineInfo'
 import { Toolbar } from './components/Toolbar'
 import { SettingsPanel } from './components/SettingsPanel'
-import { StructuresPanel } from './components/StructuresPanel'
+import { InstructionsPanel } from './components/InstructionsPanel'
+import { EstructuresPanel } from './components/EstructuresPanel'
+import { PeusPanel } from './components/PeusPanel'
 import { ExamplesPanel } from './components/ExamplesPanel'
-import { AboutPanel } from './components/AboutPanel'
 import { SynonymsPopup } from './components/SynonymsPopup'
 import { MetricsPopup } from './components/MetricsPopup'
+import { VerseSuggestions } from './components/VerseSuggestions'
 import { useDocument } from './hooks/useDocument'
 import { useSettings } from './hooks/useSettings'
 import { useTheme } from './hooks/useTheme'
 import { useVisualTheme } from './hooks/useVisualTheme'
-import { usePaperTexture } from './hooks/usePaperTexture'
+import { useVerseSuggestions } from './hooks/useVerseSuggestions'
 import { SpellChecker } from './spellcheck/client'
 import { getSynonyms, preloadSynonyms } from './synonyms/client'
 import type { SynonymResult } from './synonyms/client'
@@ -40,6 +42,7 @@ interface MetricsPopupState {
   y: number
   syllableExplanation: string
   rhymeExplanation: string
+  feetExplanation: string
   rhymeGroupIndex: number | null
   lineIndex: number
 }
@@ -49,18 +52,25 @@ function App() {
   const { settings, update, loaded } = useSettings()
   const dark = useTheme(settings.theme)
   useVisualTheme(settings.visualTheme)
-  usePaperTexture(settings.paperTexture)
   const [showSettings, setShowSettings] = useState(false)
+  const [showInstructions, setShowInstructions] = useState(false)
   const [showStructures, setShowStructures] = useState(false)
+  const [showPeus, setShowPeus] = useState(false)
   const [showExamples, setShowExamples] = useState(false)
-  const [showAbout, setShowAbout] = useState(false)
   const spellCheckerRef = useRef<SpellChecker | null>(null)
   const [spellChecker, setSpellChecker] = useState<SpellChecker | null>(null)
   const editorHandleRef = useRef<CatalanEditorHandle | null>(null)
   const [popup, setPopup] = useState<SynonymsPopupState | null>(null)
   const [metricsPopup, setMetricsPopup] = useState<MetricsPopupState | null>(null)
+  const [cursorLine, setCursorLine] = useState(0)
+  const { suggestions, loading: suggestionsLoading } = useVerseSuggestions(
+    doc.content,
+    cursorLine,
+    settings.verseSuggestionsEnabled,
+  )
 
   const ignoredWords = useMemo(() => new Set(settings.ignoredWords), [settings.ignoredWords])
+  const handleCursorLineChange = useCallback((lineIndex: number) => setCursorLine(lineIndex), [])
 
   useEffect(() => {
     preloadSynonyms()
@@ -89,6 +99,7 @@ function App() {
       y,
       syllableExplanation: info.syllableExplanation,
       rhymeExplanation: info.rhymeExplanation,
+      feetExplanation: info.feetExplanation,
       rhymeGroupIndex: info.rhymeGroupIndex,
       lineIndex: info.lineIndex,
     })
@@ -110,7 +121,9 @@ function App() {
   function handleLoadExample(title: string, content: string) {
     doc.setName(`${title}.txt`)
     doc.setContent(content)
+    setShowInstructions(false)
     setShowStructures(false)
+    setShowPeus(false)
     setShowExamples(false)
   }
 
@@ -165,14 +178,38 @@ function App() {
         onOpen={doc.openDocument}
         onSave={doc.saveDocument}
         onCopy={handleCopy}
-        onToggleSettings={() => setShowSettings((v) => !v)}
+        onToggleSettings={() => {
+          setShowSettings((v) => !v)
+          setShowInstructions(false)
+          setShowStructures(false)
+          setShowPeus(false)
+          setShowExamples(false)
+          setPopup(null)
+          setMetricsPopup(null)
+        }}
+        onToggleInstructions={() => {
+          setShowInstructions((v) => !v)
+          setShowStructures(false)
+          setShowPeus(false)
+          setShowExamples(false)
+        }}
         onToggleStructures={() => {
           setShowStructures((v) => !v)
+          setShowInstructions(false)
+          setShowPeus(false)
+          setShowExamples(false)
+        }}
+        onTogglePeus={() => {
+          setShowPeus((v) => !v)
+          setShowInstructions(false)
+          setShowStructures(false)
           setShowExamples(false)
         }}
         onToggleExamples={() => {
           setShowExamples((v) => !v)
+          setShowInstructions(false)
           setShowStructures(false)
+          setShowPeus(false)
         }}
       />
 
@@ -180,47 +217,47 @@ function App() {
         <SettingsPanel settings={settings} onChange={update} onClose={() => setShowSettings(false)} />
       )}
 
-      {showStructures && (
-        <StructuresPanel
-          onClose={() => setShowStructures(false)}
+      {showInstructions && (
+        <InstructionsPanel
+          onClose={() => setShowInstructions(false)}
           showAllSyllableCurves={settings.showAllSyllableCurves}
           onToggleShowAllSyllableCurves={(v) => update({ showAllSyllableCurves: v })}
         />
       )}
 
+      {showStructures && <EstructuresPanel onClose={() => setShowStructures(false)} />}
+
+      {showPeus && (
+        <PeusPanel
+          onClose={() => setShowPeus(false)}
+          showAllStressDots={settings.showAllStressDots}
+          onToggleShowAllStressDots={(v) => update({ showAllStressDots: v })}
+        />
+      )}
+
       {showExamples && <ExamplesPanel onClose={() => setShowExamples(false)} onLoadExample={handleLoadExample} />}
 
-      {showAbout && <AboutPanel onClose={() => setShowAbout(false)} />}
-
-      <button
-        className="fixed right-3 bottom-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-[var(--paper-bg)] text-stone-500 shadow-md hover:bg-stone-100 hover:text-stone-800 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
-        onClick={() => setShowAbout((v) => !v)}
-        title="Quant a"
-        aria-label="Quant a"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5" aria-hidden="true">
-          <circle cx="12" cy="12" r="8.25" />
-          <path d="M12 11v5.5" strokeLinecap="round" />
-          <circle cx="12" cy="8" r="0.75" fill="currentColor" stroke="none" />
-        </svg>
-      </button>
-
-      <main className="mx-auto w-full max-w-3xl flex-1 overflow-auto px-4 py-6 sm:px-6 sm:py-8">
-        <CatalanEditor
-          value={doc.content}
-          onChange={doc.setContent}
-          spellChecker={settings.spellcheckEnabled ? spellChecker : null}
-          dark={dark}
-          variant={settings.variant}
-          fontSize={settings.fontSize}
-          ignoredWords={ignoredWords}
-          onWordClick={handleWordClick}
-          onMetricsClick={handleMetricsClick}
-          highlightedRhymeGroup={metricsPopup?.rhymeGroupIndex ?? null}
-          activeMetricsLine={metricsPopup?.lineIndex ?? null}
-          showAllSyllableCurves={settings.showAllSyllableCurves}
-          handleRef={editorHandleRef}
-        />
+      <main className="relative w-full flex-1 overflow-auto">
+        <div className="mx-auto min-h-full w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+          <CatalanEditor
+            value={doc.content}
+            onChange={doc.setContent}
+            spellChecker={settings.spellcheckEnabled ? spellChecker : null}
+            dark={dark}
+            variant={settings.variant}
+            fontSize={settings.fontSize}
+            ignoredWords={ignoredWords}
+            onWordClick={handleWordClick}
+            onMetricsClick={handleMetricsClick}
+            highlightedRhymeGroup={metricsPopup?.rhymeGroupIndex ?? null}
+            activeMetricsLine={metricsPopup?.lineIndex ?? null}
+            showAllSyllableCurves={settings.showAllSyllableCurves}
+            showFootBoundaries={settings.showFootBoundaries}
+            showAllStressDots={settings.showAllStressDots}
+            onCursorLineChange={handleCursorLineChange}
+            handleRef={editorHandleRef}
+          />
+        </div>
       </main>
 
       {popup && (
@@ -244,9 +281,16 @@ function App() {
           y={metricsPopup.y}
           syllableExplanation={metricsPopup.syllableExplanation}
           rhymeExplanation={metricsPopup.rhymeExplanation}
+          feetExplanation={metricsPopup.feetExplanation}
           onClose={() => setMetricsPopup(null)}
         />
       )}
+
+      <VerseSuggestions
+        suggestions={suggestions}
+        loading={suggestionsLoading}
+        onSelect={(suggestion) => editorHandleRef.current?.insertAtCursor(suggestion.word, suggestion.replacePrefix)}
+      />
     </div>
   )
 }

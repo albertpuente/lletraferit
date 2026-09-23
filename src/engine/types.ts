@@ -3,6 +3,64 @@
  */
 
 export type StressType = 'aguda' | 'plana' | 'esdruixola'
+export type SyllableStress = 'atonic' | 'tonic'
+
+/** Traditional feet that can be expressed with Catalan tonic/atonic rhythm.
+ * The catalogue covers every two-, three-, and four-syllable binary stress
+ * pattern; classical quantity is represented here by its accentual analogue. */
+export type MetricFootType =
+  | 'pyrrhic'
+  | 'iamb'
+  | 'trochee'
+  | 'spondee'
+  | 'tribrach'
+  | 'anapest'
+  | 'dactyl'
+  | 'amphibrach'
+  | 'bacchius'
+  | 'antibacchius'
+  | 'cretic'
+  | 'molossus'
+  | 'proceleusmatic'
+  | 'paeon-first'
+  | 'paeon-second'
+  | 'paeon-third'
+  | 'paeon-fourth'
+  | 'diiamb'
+  | 'ditrochee'
+  | 'choriamb'
+  | 'antispast'
+  | 'ionic-minor'
+  | 'ionic-major'
+  | 'epitrite-first'
+  | 'epitrite-second'
+  | 'epitrite-third'
+  | 'epitrite-fourth'
+  | 'dispondee'
+  | 'irregular'
+
+export interface MetricFoot {
+  /** Traditional name for the stress pattern, or `irregular` for a remnant. */
+  type: MetricFootType
+  /** `˘` denotes atonic and `¯` denotes tonic. */
+  pattern: string
+  /** Indexes into the verse's counted metrical syllables. */
+  syllableIndices: number[]
+  /** Text range spanning the foot, which may cross word boundaries. */
+  range: { from: number; to: number }
+}
+
+export interface VerseFeetAnalysis {
+  /** Per-syllable stress after sinalefa and final-word metrical truncation. */
+  stresses: SyllableStress[]
+  /** Left-to-right scansion; a final incomplete group is `irregular`. */
+  feet: MetricFoot[]
+  /** Most common complete foot when it accounts for more than half of them. */
+  predominantFoot: MetricFootType | null
+  predominantRatio: number
+  /** Boundary after this many syllables in a 12-syllable alexandrí, if detected. */
+  cesuraAfter: number | null
+}
 
 export interface WordAnalysis {
   /** Original word token (apostrophes stripped, case preserved as lowercased). */
@@ -50,6 +108,9 @@ export interface VerseAnalysis {
    * Includes the last word's trailing unstressed syllables too, even though
    * those aren't counted toward `syllableCount`. */
   metricalSyllables: { from: number; to: number }[]
+  /** Accentual scansion in feet. This is advisory and never changes the
+   * syllable count, sinalefa, or rhyme analysis. */
+  feetAnalysis: VerseFeetAnalysis
 }
 
 export interface RhymeSchemeEntry {

@@ -12,14 +12,21 @@
  */
 
 import { analyzeVerse, computeRhymeScheme } from '../engine'
-import type { CatalanVariant, RhymeSchemeEntry, VerseAnalysis } from '../engine/types'
-import { explainSyllableCount, explainRhyme } from './explain'
+import type { CatalanVariant, MetricFoot, RhymeSchemeEntry, SyllableStress, VerseAnalysis } from '../engine/types'
+import { explainMetricFeet, explainSyllableCount, explainRhyme } from './explain'
 
 export interface LineInfo {
   syllableCount: number
   rhyme: RhymeSchemeEntry
   syllableExplanation: string
   rhymeExplanation: string
+  feetExplanation: string
+  /** Foot ranges for the optional editor overlay. */
+  metricFeet: MetricFoot[]
+  /** Stress ('atonic'|'tonic') of every entry in `metricalSyllables`, in the
+   * same order and 1:1 by index — used to draw a small stress dot above the
+   * start of each syllable in the editor. */
+  syllableStresses: SyllableStress[]
   /** Character range (within the line) of the rhyming tail, or null if the
    * line has no words. Used to highlight the rhyming syllable(s) across
    * verses that share a rhyme group. */
@@ -57,6 +64,9 @@ export function analyzeDocument(text: string, variant: CatalanVariant = 'central
         rhyme,
         syllableExplanation: explainSyllableCount(verse),
         rhymeExplanation: explainRhyme(rhyme),
+        feetExplanation: explainMetricFeet(verse),
+        metricFeet: verse.feetAnalysis.feet,
+        syllableStresses: verse.feetAnalysis.stresses,
         rhymeRange: verse.rhymeRange,
         metricalSyllables: verse.metricalSyllables,
         isBlank: false,
@@ -73,6 +83,9 @@ export function analyzeDocument(text: string, variant: CatalanVariant = 'central
         rhyme: EMPTY_RHYME,
         syllableExplanation: '',
         rhymeExplanation: '',
+        feetExplanation: '',
+        metricFeet: [],
+        syllableStresses: [],
         rhymeRange: null,
         metricalSyllables: [],
         isBlank: true,
@@ -96,6 +109,8 @@ export function lineInfoEquals(a: LineInfo, b: LineInfo): boolean {
     a.rhyme.label === b.rhyme.label &&
     a.rhyme.groupIndex === b.rhyme.groupIndex &&
     a.syllableExplanation === b.syllableExplanation &&
-    a.rhymeExplanation === b.rhymeExplanation
+    a.rhymeExplanation === b.rhymeExplanation &&
+    a.feetExplanation === b.feetExplanation &&
+    a.syllableStresses.join('') === b.syllableStresses.join('')
   )
 }

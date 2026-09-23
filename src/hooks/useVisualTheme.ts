@@ -5,7 +5,7 @@ const THEME_CLASSES: Record<VisualTheme, string | null> = {
   classic: null,
   typewriter: 'theme-typewriter',
   modern: 'theme-modern',
-  calligraphy: 'theme-calligraphy',
+  pencil: 'theme-pencil',
 }
 
 /** Reflects the "visual theme" setting (accent color, editor font, paper

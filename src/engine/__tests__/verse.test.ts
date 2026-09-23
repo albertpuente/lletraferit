@@ -18,6 +18,17 @@ describe('analyzeVerse', () => {
     expect(verse.sinalefaCount).toBe(1)
   })
 
+  it('does not apply sinalefa after the semivowel of a falling diphthong', () => {
+    // The final u in "adéu" is the /w/ semivowel of /ew/, not a vowel
+    // nucleus that can fuse with the first vowel in "on". Keeping them
+    // separate preserves the intended dactylic reading of the full verse.
+    const verse = analyzeVerse('adéu on es va inclinà el meu migdia')
+    expect(verse.sinalefaCount).toBe(1)
+    expect(verse.metricalSyllables.map(({ from, to }) => verse.text.slice(from, to))).toEqual([
+      'a', 'déu', 'on', 'es', 'va', 'in', 'cli', 'nà el', 'meu', 'mig', 'di', 'a',
+    ])
+  })
+
   it('does not chain a sinalefa across three consecutive vowel-contact words (matching the standard "no hi ha pa" -> no-ja-pa example)', () => {
     // "hi" fuses with "ha" (both atonic), which consumes "hi"; "no"/"Andreu"
     // do not also fuse into the same chain even though they end in a vowel

@@ -5,6 +5,7 @@
  * verse was counted or classified the way it was.
  */
 
+import { metricFootName } from '../engine/feet'
 import type { RhymeSchemeEntry, VerseAnalysis } from '../engine/types'
 
 function pluralize(count: number, singular: string, plural: string): string {
@@ -59,5 +60,26 @@ export function explainRhyme(rhyme: RhymeSchemeEntry): string {
     parts.push("L'apòstrof indica que la paraula final és plana.")
   }
 
+  return parts.join(' ')
+}
+
+/** Explains accentual feet without presenting them as a replacement for the
+ * app's syllable-count analysis. A foot can span word boundaries. */
+export function explainMetricFeet(verse: VerseAnalysis): string {
+  const { feet, predominantFoot, predominantRatio, cesuraAfter } = verse.feetAnalysis
+  if (feet.length === 0) return ''
+
+  const listed = feet.map((foot) => `${metricFootName(foot.type)} (${foot.pattern})`).join(' · ')
+  const parts = [`Peus: ${listed}.`]
+  if (predominantFoot) {
+    parts.push(
+      `Ritme predominant: ${metricFootName(predominantFoot)} (${Math.round(predominantRatio * 100)}% dels peus complets).`,
+    )
+  } else {
+    parts.push('Ritme mixt: cap peu complet no predomina.')
+  }
+  if (cesuraAfter) {
+    parts.push(`Alexandrí: cesura orientativa després de la síl·laba ${cesuraAfter} (dos hemistiquis de 6).`)
+  }
   return parts.join(' ')
 }

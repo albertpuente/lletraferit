@@ -25,6 +25,33 @@ export interface PoemStructure {
   stanzas: StructureStanza[]
 }
 
+/** Accentual equivalents used by the analyser. `○` is an atonic syllable and
+ * `●` a tonic syllable; feet may cross word boundaries. Names follow
+ * ca.wikipedia.org/wiki/Peu_(unitat_mètrica). */
+export const METRIC_FEET_REFERENCE = [
+  ['Pirriqui', '○○'], ['Iambe', '○●'], ['Troqueu', '●○'], ['Espondeu', '●●'],
+  ['Tribraqui', '○○○'], ['Dàctil', '●○○'], ['Amfíbrac', '○●○'], ['Anapest', '○○●'],
+  ['Baqui', '○●●'], ['Antibaqui', '●●○'], ['Crètic', '●○●'], ['Molós', '●●●'],
+  ['Proceleusmàtic', '○○○○'], ['Peó 1r', '●○○○'], ['Peó 2n', '○●○○'],
+  ['Peó 3r', '○○●○'], ['Peó 4t', '○○○●'], ['Jònic a maiore', '●●○○'],
+  ['Jònic a minore', '○○●●'], ['Ditroqueu', '●○●○'], ['Diiambe', '○●○●'],
+  ['Coriambe', '●○○●'], ['Antispast', '○●●○'], ['Epítrit 1r', '○●●●'],
+  ['Epítrit 2n', '●○●●'], ['Epítrit 3r', '●●○●'], ['Epítrit 4t', '●●●○'],
+  ['Dispondeu', '●●●●'],
+] as const
+
+/** Canonical Catalan examples displayed with the five most commonly taught
+ * rhythms. They are intentionally instructional examples, not templates.
+ * The rhythm pattern itself is computed live from `verse` by the panel
+ * (via the engine), not stored here, so it always reflects real scansion. */
+export const COMMON_METRIC_FEET_EXAMPLES = [
+  ['Iambe', 'De dins el pit covard els mots com un estol'],
+  ['Troqueu', 'És quan dormo que hi veig clar'],
+  ['Dàctil', "L’illa de l’últim adéu on es va inclinà el meu migdia"],
+  ['Amfíbrac', "S’agita la pompa llanguent d’una immensa cortina"],
+  ['Anapest', 'Va passant entremig de sa gent adormida'],
+] as const
+
 function verses(...spec: [number, string | null][]): StructureVerse[] {
   return spec.map(([syllables, rhyme]) => ({ syllables, rhyme }))
 }

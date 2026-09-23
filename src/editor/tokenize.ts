@@ -6,7 +6,12 @@ export interface WordToken {
   to: number
 }
 
-const WORD_TOKEN_REGEX = /[a-zçàèéíòóúïü'’]+/gi
+// Includes "·" (interpunct) so geminate-l words like "col·legi" are
+// extracted as a single token instead of splitting into "col" and "legi" —
+// the latter isn't a real word on its own and would be wrongly flagged as a
+// spelling error, even though the dictionary itself stores the word with
+// its "·" (e.g. "col·legi", not "collegi").
+const WORD_TOKEN_REGEX = /[a-zçàèéíòóúïü·'’]+/gi
 
 /** Finds word tokens (letters + internal apostrophes) with their offsets in `text`. */
 export function findWordTokens(text: string): WordToken[] {

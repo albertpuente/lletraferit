@@ -8,6 +8,7 @@
 import { analyzeWord } from './syllabify'
 import { hasSinalefa } from './sinalefa'
 import { normalizePhoneticTail, vowelsOnly } from './phonetics'
+import { analyzeMetricFeet } from './feet'
 import type { CatalanVariant, VerseAnalysis, WordAnalysis } from './types'
 
 const WORD_TOKEN_REGEX = /[a-zçàèéíòóúïü·]+(?:['’][a-zçàèéíòóúïü·]+)*/gi
@@ -203,6 +204,14 @@ export function analyzeVerse(text: string, variant: CatalanVariant = 'central'):
 
   const syllableCount = Math.max(0, rawSyllables - sinalefaCount - trailingUnstressed)
   const metricalSyllables = computeMetricalSyllables(words, tokenSpans, sinalefaBoundaries)
+  const feetAnalysis = analyzeMetricFeet(
+    words,
+    sinalefaBoundaries,
+    syllableCount,
+    metricalSyllables,
+    text,
+    tokenSpans.map((t) => t.raw),
+  )
 
   return {
     text,
@@ -215,5 +224,6 @@ export function analyzeVerse(text: string, variant: CatalanVariant = 'central'):
     endingType,
     rhymeRange,
     metricalSyllables,
+    feetAnalysis,
   }
 }

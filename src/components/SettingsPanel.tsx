@@ -27,7 +27,7 @@ export function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProp
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-medium text-stone-900 dark:text-neutral-100">Configuració</h2>
         <button
-          className="touch-manipulation p-1 text-stone-400 hover:text-stone-700 dark:hover:text-neutral-200"
+          className="touch-manipulation p-1 text-stone-600 hover:text-stone-700 dark:hover:text-neutral-200"
           onClick={onClose}
           aria-label="Tanca"
         >
@@ -35,7 +35,7 @@ export function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProp
         </button>
       </div>
 
-      <label className="mb-3 block text-xs text-stone-500 dark:text-neutral-400">
+      <label className="mb-3 block text-xs text-stone-600 dark:text-neutral-400">
         Variant del català
         <select
           className="mt-1 w-full rounded-md border border-stone-200 bg-transparent px-2 py-1.5 text-base text-stone-900 sm:text-sm dark:border-neutral-700 dark:text-neutral-100"
@@ -47,7 +47,7 @@ export function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProp
         </select>
       </label>
 
-      <label className="mb-3 block text-xs text-stone-500 dark:text-neutral-400">
+      <label className="mb-3 block text-xs text-stone-600 dark:text-neutral-400">
         Tema
         <select
           className="mt-1 w-full rounded-md border border-stone-200 bg-transparent px-2 py-1.5 text-base text-stone-900 sm:text-sm dark:border-neutral-700 dark:text-neutral-100"
@@ -60,7 +60,7 @@ export function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProp
         </select>
       </label>
 
-      <label className="mb-3 block text-xs text-stone-500 dark:text-neutral-400">
+      <label className="mb-3 block text-xs text-stone-600 dark:text-neutral-400">
         Estil
         <select
           className="mt-1 w-full rounded-md border border-stone-200 bg-transparent px-2 py-1.5 text-base text-stone-900 sm:text-sm dark:border-neutral-700 dark:text-neutral-100"
@@ -70,11 +70,11 @@ export function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProp
           <option value="classic">Clàssic</option>
           <option value="typewriter">Màquina d'escriure</option>
           <option value="modern">Modern</option>
-          <option value="calligraphy">Cal·ligràfic</option>
+          <option value="pencil">Llapis sobre paper</option>
         </select>
       </label>
 
-      <label className="mb-3 block text-xs text-stone-500 dark:text-neutral-400">
+      <label className="mb-3 block text-xs text-stone-600 dark:text-neutral-400">
         Mida del text
         <div className="mt-1 flex items-center gap-2">
           <button
@@ -97,7 +97,7 @@ export function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProp
             A+
           </button>
           <button
-            className="touch-manipulation rounded-md px-2 py-1 text-xs text-stone-400 hover:text-stone-700 disabled:cursor-not-allowed disabled:opacity-40 dark:text-neutral-500 dark:hover:text-neutral-200"
+            className="touch-manipulation rounded-md px-2 py-1 text-xs text-stone-600 hover:text-stone-700 disabled:cursor-not-allowed disabled:opacity-40 dark:text-neutral-500 dark:hover:text-neutral-200"
             onClick={() => onChange({ fontSize: defaultFontSize })}
             disabled={fontSize === defaultFontSize}
           >
@@ -106,17 +106,7 @@ export function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProp
         </div>
       </label>
 
-      <label className="mb-3 flex items-center justify-between text-xs text-stone-500 dark:text-neutral-400">
-        <span>Textura de paper</span>
-        <input
-          type="checkbox"
-          className="h-4 w-4 accent-stone-600 dark:accent-neutral-400"
-          checked={settings.paperTexture}
-          onChange={(e) => onChange({ paperTexture: e.target.checked })}
-        />
-      </label>
-
-      <label className="mb-3 flex items-center justify-between text-xs text-stone-500 dark:text-neutral-400">
+      <label className="mb-3 flex items-center justify-between text-xs text-stone-600 dark:text-neutral-400">
         <span>Correcció ortogràfica</span>
         <input
           type="checkbox"
@@ -126,9 +116,29 @@ export function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProp
         />
       </label>
 
+      <label className="mb-3 flex items-center justify-between text-xs text-stone-600 dark:text-neutral-400">
+        <span>Mostra els límits dels peus</span>
+        <input
+          type="checkbox"
+          className="h-4 w-4 accent-stone-600 dark:accent-neutral-400"
+          checked={settings.showFootBoundaries}
+          onChange={(e) => onChange({ showFootBoundaries: e.target.checked })}
+        />
+      </label>
+
+      <label className="mb-3 flex items-center justify-between text-xs text-stone-600 dark:text-neutral-400">
+        <span>Suggeriments de rima i mètrica</span>
+        <input
+          type="checkbox"
+          className="h-4 w-4 accent-stone-600 dark:accent-neutral-400"
+          checked={settings.verseSuggestionsEnabled}
+          onChange={(e) => onChange({ verseSuggestionsEnabled: e.target.checked })}
+        />
+      </label>
+
       {settings.ignoredWords.length > 0 && (
         <div className="mb-3">
-          <div className="mb-1 text-xs text-stone-500 dark:text-neutral-400">
+          <div className="mb-1 text-xs text-stone-600 dark:text-neutral-400">
             Diccionari personal ({settings.ignoredWords.length})
           </div>
           <div className="flex max-h-32 flex-wrap gap-1 overflow-auto">
@@ -146,12 +156,12 @@ export function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProp
         </div>
       )}
 
-      <p className="mb-3 text-xs leading-relaxed text-stone-400 dark:text-neutral-500">
+      <p className="mb-3 text-xs leading-relaxed text-stone-600 dark:text-neutral-500">
         El comptatge de síl·labes i les rimes es calculen automàticament. Escriu una dièresi (ï/ü) per
         forçar un hiat on per defecte hi hauria una sinalefa o diftong.
       </p>
 
-      <p className="text-xs leading-relaxed text-stone-400 dark:text-neutral-500">
+      <p className="text-xs leading-relaxed text-stone-600 dark:text-neutral-500">
         Els sinònims provenen del{' '}
         <a
           className="underline hover:text-stone-600 dark:hover:text-neutral-300"

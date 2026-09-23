@@ -11,7 +11,9 @@ export interface DocumentRecord {
   fileHandle?: FileSystemFileHandle
 }
 
-export type VisualTheme = 'classic' | 'typewriter' | 'modern' | 'calligraphy'
+export type VisualTheme = 'classic' | 'typewriter' | 'modern' | 'pencil'
+
+const VISUAL_THEMES: readonly VisualTheme[] = ['classic', 'typewriter', 'modern', 'pencil']
 
 export interface AppSettings {
   key: 'settings'
@@ -21,7 +23,6 @@ export interface AppSettings {
    * independent of the light/dark setting above. */
   visualTheme: VisualTheme
   lastDocId: string | null
-  paperTexture: boolean
   spellcheckEnabled: boolean
   /** Editor text size in pixels; adjustable in Settings, persisted across restarts. */
   fontSize: number
@@ -29,6 +30,15 @@ export interface AppSettings {
    * with curves (not just the currently-clicked one) — toggled from the
    * Structures panel. */
   showAllSyllableCurves: boolean
+  /** When true, shade the text ranges belonging to detected metrical feet. */
+  showFootBoundaries: boolean
+  /** When true, every verse's stress dots (○/● above each syllable) are
+   * permanently shown (not just the currently-clicked verse's) — toggled
+   * from the Peus panel. */
+  showAllStressDots: boolean
+  /** Show nonblocking rhyming, metrically compatible word suggestions while
+   * composing a verse after the first line of a stanza. */
+  verseSuggestionsEnabled: boolean
   /** User-added words (lowercased) that are always treated as correctly
    * spelled, regardless of what the dictionary says. */
   ignoredWords: string[]
@@ -88,10 +98,12 @@ export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'light',
   visualTheme: 'classic',
   lastDocId: null,
-  paperTexture: false,
   spellcheckEnabled: true,
   fontSize: FONT_SIZE_DEFAULT,
   showAllSyllableCurves: false,
+  showFootBoundaries: false,
+  showAllStressDots: false,
+  verseSuggestionsEnabled: true,
   ignoredWords: [],
 }
 
@@ -106,6 +118,12 @@ export async function getSettings(): Promise<AppSettings> {
   // NaN written by a transient bug).
   if (stored?.fontSize === undefined || !Number.isFinite(merged.fontSize)) {
     merged.fontSize = getDefaultFontSize()
+  }
+  // A saved value can outlive a removed visual style (for example, the
+  // former calligraphy style). Return a supported value so the selector and
+  // page appearance remain in sync after an upgrade.
+  if (!VISUAL_THEMES.includes(merged.visualTheme)) {
+    merged.visualTheme = DEFAULT_SETTINGS.visualTheme
   }
   return merged
 }

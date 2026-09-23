@@ -1,10 +1,3 @@
-/* Cookie: a Google Font used specifically for the "Cal·ligràfic" theme's
- * script look (see .theme-calligraphy below). Unlike every other theme's
- * font stack, this one is NOT a system/offline font — it requires a
- * network fetch the first time it's used, same as the synonyms dictionary
- * build step elsewhere in this app. Must come before @import "tailwindcss"
- * below: CSS requires all @import rules to precede any other rule. */
-@import url('https://fonts.googleapis.com/css2?family=Cookie&display=swap');
 @import "tailwindcss";
 
 /* Dark mode is toggled manually (via a `.dark` class on <html>, driven by
@@ -25,10 +18,9 @@
   --font-editor: 'iA Writer Quattro', 'Georgia', serif;
   --editor-letter-spacing: normal;
   --editor-font-scale: 1;
-  /** Editor text color; overridden per-theme below when a theme wants ink
-   * that isn't simply "dark text in light mode / light text in dark mode"
-   * (e.g. the calligraphy theme's crimson ink). Falls back to the app's
-   * original hardcoded colors otherwise (see CatalanEditor.tsx). */
+  /** Editor text color; overridden per-theme below when a theme needs a
+   * custom ink color. Falls back to the app's original hardcoded colors
+   * otherwise (see CatalanEditor.tsx). */
   --editor-text-color: #1c1917;
   --accent: #b91c1c;
   --paper-bg: #f8f5ee;
@@ -69,22 +61,26 @@
   --accent: #60a5fa;
 }
 
-/* "Cal·ligràfic": an elegant, formal handwritten personality — the
-   "Cookie" script Google Font, a clear warm-white paper, and dark, solid
-   crimson-black ink text (no shadow/glow — plain, still text). Cookie
-   renders noticeably smaller/tighter than the classic serif at the same
-   point size, so scaled up more than the other themes. */
-.theme-calligraphy {
-  --font-editor: 'Cookie', 'Segoe Print', 'Bradley Hand', 'Noteworthy', cursive;
-  --editor-letter-spacing: 0.01em;
-  --editor-font-scale: 1.6;
-  --editor-text-color: #3b0a0a;
-  --accent: #3b0a0a;
-  --paper-bg: #fdf8ef;
+/* "Llapis sobre paper": a notebook page written in graphite. Uses the
+   platform's handwritten fonts where available, with an intentionally soft
+   charcoal ink color instead of pure black. The ruled-paper treatment is
+   applied to the page background below, where it can layer with the grain. */
+.theme-pencil {
+  --font-editor: 'Noteworthy', 'Bradley Hand', 'Segoe Print', 'Chalkboard SE', 'Comic Sans MS', cursive;
+  --editor-letter-spacing: 0.012em;
+  --editor-font-scale: 1.08;
+  --editor-text-color: #4b4740;
+  --accent: #62615b;
+  --paper-bg: #faf7eb;
+  /* Lines up with the gap after the logo and before the "Nou" button. */
+  --pencil-margin-left: 7rem;
+  /* Pencil marks sit especially close to the handwritten verse. */
+  --stress-dots-offset: 2px;
 }
-.theme-calligraphy.dark {
-  --editor-text-color: #fda4af;
-  --accent: #fda4af;
+.theme-pencil.dark {
+  --editor-text-color: #e5e1d5;
+  --accent: #d5d0c2;
+  --paper-bg: #1b1b19;
 }
 
 html,
@@ -112,13 +108,55 @@ body {
   @apply bg-[var(--paper-bg)] text-stone-900 dark:bg-neutral-950 dark:text-neutral-100;
 }
 
-/* Optional fine-grained paper texture (Settings > "Textura de paper"),
-   toggled via a `paper-texture` class on <body>. A tiled SVG noise filter,
-   layered under the theme background color, keeps it independent of
-   light/dark mode while still reading clearly as paper grain. */
-body.paper-texture {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='5' stitchTiles='stitch' result='noise'/%3E%3CfeColorMatrix in='noise' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
+/* Keep the pencil style self-contained: it supplies a subtle fibrous paper
+   grain even when the separate paper-texture preference is off. The red
+   notebook margin is aligned to the toolbar gap between the logo and "Nou".
+   Ruled lines themselves are applied to the editor content below, where they
+   can precisely follow each verse's actual line height. */
+.theme-pencil body {
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='paper'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paper)' opacity='.08'/%3E%3C/svg%3E"),
+    linear-gradient(to right, transparent var(--pencil-margin-left), rgb(202 102 102 / 26%) var(--pencil-margin-left), rgb(202 102 102 / 26%) calc(var(--pencil-margin-left) + 1px), transparent calc(var(--pencil-margin-left) + 1px));
+  background-position: 0 0, 0 0;
+  background-repeat: repeat, no-repeat;
+  background-size: 180px 180px, 100% 100%;
+  background-attachment: fixed;
+}
+
+.theme-pencil.dark body {
+  background-color: var(--paper-bg);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='paper'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paper)' opacity='.06'/%3E%3C/svg%3E"),
+    linear-gradient(to right, transparent var(--pencil-margin-left), rgb(185 113 113 / 22%) var(--pencil-margin-left), rgb(185 113 113 / 22%) calc(var(--pencil-margin-left) + 1px), transparent calc(var(--pencil-margin-left) + 1px));
+}
+
+/* The writing surface owns the rules: it occupies the full viewport width,
+   scrolls together with the verses, and uses the first measured verse row
+   as the grid's origin. This keeps every rule precisely between lines. */
+.theme-pencil main {
+  background-image: linear-gradient(to bottom, transparent calc(100% - 1px), rgb(104 139 165 / 15%) calc(100% - 1px));
+  background-position: 0 var(--pencil-rule-origin, 0px);
+  background-repeat: repeat-y;
+  background-size: 100% var(--pencil-rule-height, 40px);
+  background-attachment: local;
+}
+
+.theme-pencil.dark main {
+  background-image: linear-gradient(to bottom, transparent calc(100% - 1px), rgb(174 196 212 / 12%) calc(100% - 1px));
+}
+
+/* The rule grid starts with the writing surface, not the menu bar. Give the
+   toolbar its own paper-colored backing so no horizontal rule appears behind
+   the controls, while retaining the vertical notebook margin in its intended
+   gap between the logo and "Nou". */
+.theme-pencil header {
+  background-color: var(--paper-bg);
+  background-image: linear-gradient(to right, transparent var(--pencil-margin-left), rgb(202 102 102 / 26%) var(--pencil-margin-left), rgb(202 102 102 / 26%) calc(var(--pencil-margin-left) + 1px), transparent calc(var(--pencil-margin-left) + 1px));
+  background-attachment: fixed;
+}
+
+.theme-pencil.dark header {
+  background-image: linear-gradient(to right, transparent var(--pencil-margin-left), rgb(185 113 113 / 22%) var(--pencil-margin-left), rgb(185 113 113 / 22%) calc(var(--pencil-margin-left) + 1px), transparent calc(var(--pencil-margin-left) + 1px));
 }
 
 /* Rhyme markers: a bold colored letter shown next to the syllable count in
@@ -154,9 +192,8 @@ body.paper-texture {
  * illustration to reproduce the same underline-curve look for a plain,
  * non-editor mockup of a verse. */
 .syllable-curve-demo {
-  border-bottom: 2px solid currentColor;
+  border-bottom: 2px solid color-mix(in srgb, currentColor 50%, transparent);
   border-radius: 0 0 60% 60% / 0 0 45% 45%;
-  opacity: 0.5;
   padding-bottom: 2px;
 }
 

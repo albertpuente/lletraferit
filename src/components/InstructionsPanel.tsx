@@ -1,25 +1,10 @@
 import { useRef } from 'react'
-import { COMMON_METRIC_FEET_EXAMPLES, METRIC_FEET_REFERENCE, POEM_STRUCTURES } from '../structures/definitions'
-import type { StructureVerse } from '../structures/definitions'
-import { analyzeVerse, describeFeetPattern, hyphenateStressPattern, verseTypeName } from '../engine'
 import { useClickOutside } from '../hooks/useClickOutside'
 
-export interface StructuresPanelProps {
+export interface InstructionsPanelProps {
   onClose: () => void
   showAllSyllableCurves: boolean
   onToggleShowAllSyllableCurves: (value: boolean) => void
-}
-
-function VerseBadge({ verse }: { verse: StructureVerse }) {
-  return (
-    <span
-      className="inline-flex items-center gap-1 rounded-md bg-stone-100 px-1.5 py-0.5 text-[11px] text-stone-600 dark:bg-neutral-800 dark:text-neutral-300"
-      title={verseTypeName(verse.syllables)}
-    >
-      <span className="font-medium tabular-nums">{verse.syllables}</span>
-      {verse.rhyme && <span className="text-violet-500 dark:text-violet-400">{verse.rhyme}</span>}
-    </span>
-  )
 }
 
 /** A small cursor with click ripples, overlaid on the metrics badge in the
@@ -65,13 +50,13 @@ const CLICK_EXAMPLE_SEGMENTS: { text: string; curve: boolean }[] = [
 function ClickToAnalyzeIllustration() {
   return (
     <div className="mb-4">
-      <p className="mb-2 text-xs leading-relaxed text-stone-400 dark:text-neutral-500">
+      <p className="mb-2 text-xs leading-relaxed text-stone-600 dark:text-neutral-500">
         Clica sobre un nombre o lletra per veure l'anàlisi:
       </p>
       <div className="mb-3 flex items-center gap-2 rounded-md border border-stone-200 bg-[var(--paper-bg)] px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800">
         <span className="relative flex shrink-0 items-center gap-1 tabular-nums">
           <ClickPointerIcon className="pointer-events-none absolute top-3 left-2 h-5 w-5 text-stone-700 dark:text-neutral-300" />
-          <span className="cursor-pointer text-sm text-stone-400 dark:text-neutral-500">4</span>
+          <span className="cursor-pointer text-sm text-stone-600 dark:text-neutral-500">4</span>
           <span className="cursor-pointer text-xs font-semibold rhyme-text-1">b</span>
         </span>
         <span className="font-serif text-base text-stone-800 dark:text-neutral-200">
@@ -89,7 +74,7 @@ function ClickToAnalyzeIllustration() {
 
       <div className="rounded-md border border-stone-200 bg-[var(--paper-bg)] p-3 text-sm shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
         <div className="mb-2 last:mb-0">
-          <div className="mb-1 text-[11px] uppercase tracking-wide text-stone-400 dark:text-neutral-500">
+          <div className="mb-1 text-[11px] uppercase tracking-wide text-stone-600 dark:text-neutral-500">
             Síl·labes
           </div>
           <p className="text-xs leading-relaxed text-stone-600 dark:text-neutral-300">
@@ -98,7 +83,7 @@ function ClickToAnalyzeIllustration() {
           </p>
         </div>
         <div className="last:mb-0">
-          <div className="mb-1 text-[11px] uppercase tracking-wide text-stone-400 dark:text-neutral-500">Rima</div>
+          <div className="mb-1 text-[11px] uppercase tracking-wide text-stone-600 dark:text-neutral-500">Rima</div>
           <p className="text-xs leading-relaxed text-stone-600 dark:text-neutral-300">
             Rima «b»: aquest vers acaba igual (des de la vocal tònica) que els altres versos marcats «b» en aquesta
             estrofa. És un vers d'art menor (8 síl·labes o menys).
@@ -109,11 +94,16 @@ function ClickToAnalyzeIllustration() {
   )
 }
 
-export function StructuresPanel({
+/** Panel explaining how to read/interact with the editor's metrics gutter
+ * (syllable count, rhyme letter, apostrophe convention) — split out from
+ * the reference catalogs (Estructures, Peus) so each has a focused,
+ * single-purpose surface. Also hosts the app's About/credits section
+ * (formerly a separate floating button), shown after a separator at the end. */
+export function InstructionsPanel({
   onClose,
   showAllSyllableCurves,
   onToggleShowAllSyllableCurves,
-}: StructuresPanelProps) {
+}: InstructionsPanelProps) {
   const ref = useRef<HTMLDivElement>(null)
   useClickOutside(ref, onClose)
 
@@ -125,7 +115,7 @@ export function StructuresPanel({
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-medium text-stone-900 dark:text-neutral-100">Instruccions</h2>
         <button
-          className="touch-manipulation p-1 text-stone-400 hover:text-stone-700 dark:hover:text-neutral-200"
+          className="touch-manipulation p-1 text-stone-600 hover:text-stone-700 dark:hover:text-neutral-200"
           onClick={onClose}
           aria-label="Tanca"
         >
@@ -135,12 +125,12 @@ export function StructuresPanel({
 
       <ClickToAnalyzeIllustration />
 
-      <p className="mb-4 text-xs leading-relaxed text-stone-400 dark:text-neutral-500">
+      <p className="mb-4 text-xs leading-relaxed text-stone-600 dark:text-neutral-500">
         El nombre indica les síl·labes del vers; la lletra, el
         grup de rima (versos sense lletra són versos blancs). Una lletra{' '}
-        <span className="font-semibold text-stone-500 dark:text-neutral-400">majúscula</span> indica un
+        <span className="font-semibold text-stone-600 dark:text-neutral-400">majúscula</span> indica un
         vers d'art major (més de 8 síl·labes); una{' '}
-        <span className="text-stone-500 dark:text-neutral-400">minúscula</span>, un vers d'art menor (8
+        <span className="text-stone-600 dark:text-neutral-400">minúscula</span>, un vers d'art menor (8
         síl·labes o menys).
       </p>
 
@@ -154,66 +144,53 @@ export function StructuresPanel({
         />
       </label>
 
-      <p className="mb-4 text-xs leading-relaxed text-stone-400 dark:text-neutral-500">
+      <p className="text-xs leading-relaxed text-stone-600 dark:text-neutral-500">
         Un apòstrof després de la lletra (per exemple{' '}
-        <span className="font-medium text-stone-500 dark:text-neutral-400">a'</span> en comptes de{' '}
-        <span className="font-medium text-stone-500 dark:text-neutral-400">a</span>) indica que la
+        <span className="font-medium text-stone-600 dark:text-neutral-400">a'</span> en comptes de{' '}
+        <span className="font-medium text-stone-600 dark:text-neutral-400">a</span>) indica que la
         paraula final d'aquest vers és plana (rima femenina); sense apòstrof, el vers acaba en una
         paraula aguda o esdrúixola (rima masculina). És la convenció clàssica per distingir totes dues
         terminacions dins un mateix esquema de rima.
       </p>
 
-      <h3 className="mb-2 text-sm font-medium text-stone-800 dark:text-neutral-200">Estructures</h3>
-      <div className="flex flex-col gap-4">
-        {POEM_STRUCTURES.map((structure) => (
-          <div key={structure.id} className="border-t border-stone-100 pt-3 first:border-t-0 first:pt-0 dark:border-neutral-800">
-            <h3 className="text-xs font-medium text-stone-800 dark:text-neutral-200">{structure.name}</h3>
-            <p className="mt-0.5 mb-2 text-xs leading-relaxed text-stone-400 dark:text-neutral-500">
-              {structure.description}
-            </p>
-            <div className="flex flex-col gap-1">
-              {structure.stanzas.map((stanza, i) => (
-                <div key={i} className="flex flex-wrap items-center gap-1">
-                  {stanza.verses.map((verse, j) => (
-                    <VerseBadge key={j} verse={verse} />
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+      <hr className="my-4 border-stone-200 dark:border-neutral-800" />
 
-      <section className="mt-5 mb-4">
-        <h3 className="mb-1 text-sm font-medium text-stone-800 dark:text-neutral-200">Peus mètrics</h3>
-        <p className="mb-2 text-xs leading-relaxed text-stone-400 dark:text-neutral-500">
-          En català, un peu descriu el ritme de síl·labes àtones (○) i tòniques (●). Pot travessar mots. L'anapest,
-          per exemple, és ○○●; l'anàlisi indica el ritme predominant sense modificar el recompte de síl·labes.
-        </p>
-        <div className="mb-3 space-y-2">
-          {COMMON_METRIC_FEET_EXAMPLES.map(([name, verse]) => (
-            <div key={name} className="text-xs leading-relaxed text-stone-600 dark:text-neutral-300">
-              <span className="font-medium text-stone-800 dark:text-neutral-100">{name}</span>
-              <span className="ml-2 font-mono font-semibold tracking-wide">
-                {describeFeetPattern(analyzeVerse(verse).feetAnalysis.feet)}
-              </span>
-              <p className="text-stone-500 dark:text-neutral-400">{verse}</p>
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-stone-600 dark:text-neutral-300">
-          {METRIC_FEET_REFERENCE.map(([name, pattern]) => (
-            <span key={name} className="flex justify-between gap-1">
-              <span>{name}</span><span className="font-medium">{hyphenateStressPattern(pattern)}</span>
-            </span>
-          ))}
-        </div>
-        <p className="mt-2 text-xs leading-relaxed text-stone-400 dark:text-neutral-500">
-          En un alexandrí de 12 síl·labes, l'aplicació assenyala orientativament la cesura després de la sisena,
-          separant dos hemistiquis de sis síl·labes.
-        </p>
-      </section>
+      <p className="mb-2 font-serif text-base italic leading-relaxed text-stone-700 dark:text-neutral-300">
+        <span className="inline-block font-serif text-md italic tracking-tight text-stone-900 dark:text-neutral-100">
+          Lletra<span className="text-red-700 dark:text-red-400">ferit</span>
+        </span>{' '}
+        és un projecte de{' '}
+        <a
+          href="https://github.com/albertpuente/lletraferit"
+          className="underline hover:text-stone-900 dark:hover:text-neutral-100"
+          target="_blank"
+          rel="noreferrer"
+        >
+          codi obert
+        </a>.{' '}
+        <br />
+        La seva finalitat és ajudar a l'aprenentatge de la mètrica catalana i a l'escriptura de poesia.
+      </p>
+
+      <p className="text-xs leading-relaxed text-stone-600 dark:text-neutral-500">
+        Albert Puente Encinas
+      </p>
+
+      <p className="text-xs leading-relaxed text-stone-600 dark:text-neutral-500">
+        Llicència:{' '}
+        <a
+          href="https://github.com/albertpuente/lletraferit/blob/main/LICENSE"
+          className="underline hover:text-stone-600 dark:hover:text-neutral-300"
+          target="_blank"
+          rel="noreferrer"
+        >
+          GPL-3.0-or-later
+        </a>
+      </p>
+
+      <p className="text-xs leading-relaxed text-stone-600 dark:text-neutral-500">
+        Versió Alpha - Segurament conté errors.
+      </p>
     </div>
   )
 }
-

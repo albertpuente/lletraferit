@@ -21,7 +21,7 @@ export function ExamplesPanel({ onClose, onLoadExample }: ExamplesPanelProps) {
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-medium text-stone-900 dark:text-neutral-100">Exemples</h2>
         <button
-          className="touch-manipulation p-1 text-stone-400 hover:text-stone-700 dark:hover:text-neutral-200"
+          className="touch-manipulation p-1 text-stone-600 hover:text-stone-700 dark:hover:text-neutral-200"
           onClick={onClose}
           aria-label="Tanca"
         >
@@ -29,7 +29,7 @@ export function ExamplesPanel({ onClose, onLoadExample }: ExamplesPanelProps) {
         </button>
       </div>
 
-      <p className="mb-3 text-xs leading-relaxed text-stone-400 dark:text-neutral-500">
+      <p className="mb-3 text-xs leading-relaxed text-stone-600 dark:text-neutral-500">
         Carrega un poema real a l'editor per veure com se n'analitzen les síl·labes i la rima.
       </p>
 
@@ -41,7 +41,7 @@ export function ExamplesPanel({ onClose, onLoadExample }: ExamplesPanelProps) {
             onClick={() => onLoadExample(example.title, example.content)}
           >
             <div className="text-sm font-medium text-stone-800 dark:text-neutral-200">{example.title}</div>
-            <div className="text-[11px] text-stone-400 dark:text-neutral-500">{example.attribution}</div>
+            <div className="text-[11px] text-stone-600 dark:text-neutral-500">{example.attribution}</div>
           </button>
         ))}
       </div>

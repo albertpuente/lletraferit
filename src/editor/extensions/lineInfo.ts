@@ -10,6 +10,7 @@ export const setVariant = StateEffect.define<CatalanVariant>()
 export interface MetricsClickInfo {
   syllableExplanation: string
   rhymeExplanation: string
+  feetExplanation: string
   /** Rhyme group of the clicked verse, so its rhyming syllables (and those
    * of other verses sharing the group) can be highlighted. */
   rhymeGroupIndex: number | null
@@ -49,6 +50,7 @@ class SyllableMarker extends GutterMarker {
   readonly rhymeGroupIndex: number | null
   readonly syllableExplanation: string
   readonly rhymeExplanation: string
+  readonly feetExplanation: string
 
   constructor(
     count: number,
@@ -56,6 +58,7 @@ class SyllableMarker extends GutterMarker {
     rhymeGroupIndex: number | null,
     syllableExplanation: string,
     rhymeExplanation: string,
+    feetExplanation: string,
   ) {
     super()
     this.count = count
@@ -63,6 +66,7 @@ class SyllableMarker extends GutterMarker {
     this.rhymeGroupIndex = rhymeGroupIndex
     this.syllableExplanation = syllableExplanation
     this.rhymeExplanation = rhymeExplanation
+    this.feetExplanation = feetExplanation
   }
 
   eq(other: SyllableMarker) {
@@ -71,7 +75,8 @@ class SyllableMarker extends GutterMarker {
       other.rhymeLabel === this.rhymeLabel &&
       other.rhymeGroupIndex === this.rhymeGroupIndex &&
       other.syllableExplanation === this.syllableExplanation &&
-      other.rhymeExplanation === this.rhymeExplanation
+      other.rhymeExplanation === this.rhymeExplanation &&
+      other.feetExplanation === this.feetExplanation
     )
   }
 
@@ -115,19 +120,21 @@ export function syllableGutter(onClick: (info: MetricsClickInfo) => void): Exten
           info.rhyme.groupIndex,
           info.syllableExplanation,
           info.rhymeExplanation,
+          info.feetExplanation,
         )
       },
-      initialSpacer: () => new SyllableMarker(0, '', null, '', ''),
+      initialSpacer: () => new SyllableMarker(0, '', null, '', '', ''),
       domEventHandlers: {
         click(view, line) {
           const lineNumber = view.state.doc.lineAt(line.from).number - 1
           const info = view.state.field(lineInfoField).infos[lineNumber]
-          if (!info || (!info.syllableExplanation && !info.rhymeExplanation)) return false
+          if (!info || (!info.syllableExplanation && !info.rhymeExplanation && !info.feetExplanation)) return false
           const lineRect = view.coordsAtPos(line.from)
           if (!lineRect) return false
           onClick({
             syllableExplanation: info.syllableExplanation,
             rhymeExplanation: info.rhymeExplanation,
+            feetExplanation: info.feetExplanation,
             rhymeGroupIndex: info.rhyme.groupIndex,
             lineIndex: lineNumber,
             lineLeft: lineRect.left,
