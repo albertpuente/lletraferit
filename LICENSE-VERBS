@@ -1,0 +1,14 @@
+Catalan verb conjugation data in public/dictionaries/verbs.json is derived from
+verbecc, https://github.com/bretttolbert/verbecc, at revision:
+
+  a5cab52168cda317a358222448a8a7c5fe58657a
+
+verbecc is Copyright (C) Brett Tolbert and contributors and is licensed under
+the GNU Lesser General Public License, version 3.0 or later (LGPL-3.0-or-later).
+The exact LGPL-3.0 text bundled with the deployed app is available at
+`public/licenses/verbecc-LGPL-3.0.txt`; the upstream copy is available at:
+
+  https://github.com/bretttolbert/verbecc/blob/a5cab52168cda317a358222448a8a7c5fe58657a/LICENSE.txt
+
+The generated index contains only lower-case, single-word Catalan verb forms.
+It excludes subject pronouns and multi-word compound or periphrastic forms.

@@ -5,6 +5,8 @@ export interface VerseSuggestionTarget {
   stanzaIndex: number
 }
 
+export type CatalanVariant = 'central' | 'valencia'
+
 export interface VerseSuggestion {
   word: string
   colorIndex: number
@@ -39,6 +41,16 @@ function getWorker(): Worker {
   return worker
 }
 
+/** Starts the worker's offline verb-rhyme index before the user requests a
+ * suggestion, keeping the large static dataset off the main thread. */
+export function preloadVerseSuggestions(variant: CatalanVariant): void {
+  getWorker().postMessage({
+    type: 'preload',
+    verbsUrl: `${import.meta.env.BASE_URL}dictionaries/verbs.json`,
+    variant,
+  })
+}
+
 /** Finds metrically compatible rhyming endings in a dedicated worker. The
  * main editor thread only posts the small request payload, so typing remains
  * responsive while the thesaurus is searched and scanned. */
@@ -46,6 +58,7 @@ export function getVerseSuggestions(
   currentLine: string,
   targets: VerseSuggestionTarget[],
   stanzaLines: string[],
+  variant: CatalanVariant,
 ): Promise<VerseSuggestion[]> {
   if (targets.length === 0 || currentLine.trim() === '') return Promise.resolve([])
 
@@ -54,9 +67,11 @@ export function getVerseSuggestions(
     type: 'suggest',
     requestId,
     dataUrl: `${import.meta.env.BASE_URL}dictionaries/synonyms.json`,
+    verbsUrl: `${import.meta.env.BASE_URL}dictionaries/verbs.json`,
     currentLine,
     targets,
     stanzaLines,
+    variant,
   })
   return new Promise((resolve) => pending.set(requestId, { resolve }))
 }

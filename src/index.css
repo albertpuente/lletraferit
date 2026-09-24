@@ -4,6 +4,10 @@
    the app's theme setting) rather than only following OS preference. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --breakpoint-sm: 718px;
+}
+
 :root {
   color-scheme: light;
 

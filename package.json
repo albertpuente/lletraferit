@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "postinstall": "node scripts/copy-dictionaries.mjs",
-    "build:synonyms": "node scripts/build-synonyms.mjs"
+    "build:synonyms": "node scripts/build-synonyms.mjs",
+    "build:verbs": "python3.10 scripts/build-verbs.py"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.1",

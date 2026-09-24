@@ -13,6 +13,7 @@ export interface VerseSuggestionsProps {
  * layout, selection, or keystroke latency. */
 export function VerseSuggestions({ suggestions, loading, cursorPosition, onSelect }: VerseSuggestionsProps) {
   const [viewport, setViewport] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }))
+  const [fadeIn, setFadeIn] = useState(false)
 
   useEffect(() => {
     const visualViewport = window.visualViewport
@@ -45,7 +46,21 @@ export function VerseSuggestions({ suggestions, loading, cursorPosition, onSelec
     },
     [],
   )
-  const visible = !loading && suggestions.length > 0 && cursorPosition !== null
+  const hasContent = suggestions.length > 0 && cursorPosition !== null
+  const visible = !loading && hasContent
+
+  useEffect(() => {
+    if (!visible) {
+      setFadeIn(false)
+      return
+    }
+
+    let animationFrame = requestAnimationFrame(() => {
+      animationFrame = requestAnimationFrame(() => setFadeIn(true))
+    })
+    return () => window.cancelAnimationFrame(animationFrame)
+  }, [visible, suggestions])
+
   const panelWidth = 288
   const panelEstimateHeight = 176
   const left = Math.min(Math.max(8, cursorPosition?.left ?? 8), viewport.width - panelWidth - 8)
@@ -60,12 +75,12 @@ export function VerseSuggestions({ suggestions, loading, cursorPosition, onSelec
   return (
     <aside
       aria-hidden={!visible}
-      className={`fixed z-10 w-72 max-w-[calc(100vw-1.5rem)] overflow-auto rounded-lg border border-stone-200 bg-[var(--paper-bg)] p-3 shadow-lg transition-[opacity,transform] duration-150 ease-out dark:border-neutral-800 dark:bg-neutral-900 ${
-        visible ? 'translate-x-0 opacity-100' : 'pointer-events-none translate-x-[calc(100%+1rem)] opacity-0'
+      className={`fixed z-10 w-72 max-w-[calc(100vw-1.5rem)] overflow-auto rounded-lg border border-stone-200 bg-[var(--paper-bg)] p-3 shadow-lg transition-opacity duration-100 ease-out dark:border-neutral-800 dark:bg-neutral-900 ${
+        fadeIn ? 'opacity-100' : 'pointer-events-none opacity-0'
       }`}
       style={{ left, top, bottom: 'auto', maxHeight }}
     >
-      {visible && (
+      {hasContent && (
         <div className="space-y-1.5">
           {groups.map((group) => (
             <div key={`${group.colorIndex}-${group.rhymeLabel}`} className="flex items-baseline gap-2 text-xs">
@@ -80,7 +95,14 @@ export function VerseSuggestions({ suggestions, loading, cursorPosition, onSelec
                     title={`${suggestion.syllables} síl·labes`}
                     onClick={() => onSelect(suggestion)}
                   >
-                    {suggestion.word}
+                    {suggestion.replacePrefix ? (
+                      <>
+                        <strong>{suggestion.word.slice(0, suggestion.replacePrefix.length)}</strong>
+                        {suggestion.word.slice(suggestion.replacePrefix.length)}
+                      </>
+                    ) : (
+                      suggestion.word
+                    )}
                   </button>
                 ))}
               </div>

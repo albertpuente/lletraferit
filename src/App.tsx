@@ -20,6 +20,7 @@ import { useVerseSuggestions } from './hooks/useVerseSuggestions'
 import { SpellChecker } from './spellcheck/client'
 import { getSynonyms, preloadSynonyms } from './synonyms/client'
 import type { SynonymResult } from './synonyms/client'
+import { preloadVerseSuggestions } from './suggestions/client'
 import { clampPopupPosition, positionPopupNearLine } from './utils/popupPosition'
 
 const SYNONYMS_POPUP_SIZE = { width: 256, height: 288 }
@@ -68,6 +69,7 @@ function App() {
     doc.content,
     cursorLine,
     settings.verseSuggestionsEnabled,
+    settings.variant,
   )
 
   const ignoredWords = useMemo(() => new Set(settings.ignoredWords), [settings.ignoredWords])
@@ -76,6 +78,10 @@ function App() {
   useEffect(() => {
     preloadSynonyms()
   }, [])
+
+  useEffect(() => {
+    preloadVerseSuggestions(settings.variant)
+  }, [settings.variant])
 
   async function handleWordClick(info: WordClickInfo) {
     const { word, from, to, clientX, clientY, isUnknown } = info

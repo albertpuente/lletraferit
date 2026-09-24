@@ -172,6 +172,19 @@ export function InstructionsPanel({
         La seva finalitat és ajudar a l'aprenentatge de la mètrica catalana i a l'escriptura de poesia.
       </p>
 
+      <p className="mb-3 text-xs leading-relaxed text-stone-600 dark:text-neutral-500">
+        Aquesta web és una versió alpha i segurament conté errors.
+      </p>
+
+      <a
+        href="https://github.com/albertpuente/lletraferit/issues/new"
+        className="mb-3 inline-flex items-center rounded-md border border-stone-300 px-3 py-2 text-xs font-medium text-stone-700 hover:bg-stone-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+        target="_blank"
+        rel="noreferrer"
+      >
+        Envia un suggeriment o correcció
+      </a>
+
       <p className="text-xs leading-relaxed text-stone-600 dark:text-neutral-500">
         Albert Puente Encinas
       </p>
@@ -189,7 +202,37 @@ export function InstructionsPanel({
       </p>
 
       <p className="text-xs leading-relaxed text-stone-600 dark:text-neutral-500">
-        Versió Alpha - Segurament conté errors.
+        <a
+          href="https://github.com/Softcatala/sinonims-cat"
+          className="underline hover:text-stone-600 dark:hover:text-neutral-300"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Diccionari de sinònims de Softcatalà
+        </a>{' '}
+        (
+        <a
+          href="https://github.com/albertpuente/lletraferit/blob/main/LICENSE-SOFTCATALA"
+          className="underline hover:text-stone-600 dark:hover:text-neutral-300"
+          target="_blank"
+          rel="noreferrer"
+        >
+          CC-BY 4.0
+        </a>
+        ).
+      </p>
+
+      <p className="text-xs leading-relaxed text-stone-600 dark:text-neutral-500">
+        Formes verbals: verbecc (
+        <a
+          href={`${import.meta.env.BASE_URL}licenses/verbecc-LGPL-3.0.txt`}
+          className="underline hover:text-stone-600 dark:hover:text-neutral-300"
+          target="_blank"
+          rel="noreferrer"
+        >
+          LGPL-3.0-or-later
+        </a>
+        ).
       </p>
     </div>
   )

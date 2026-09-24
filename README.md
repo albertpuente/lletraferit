@@ -87,14 +87,19 @@ real published poems rather than formally verified against a reference corpus.
 
 - Spellcheck dictionaries: `dictionary-ca` / `dictionary-ca-valencia` (Hunspell format, npm).
 - Synonyms: [Softcatalà's Diccionari de sinònims](https://github.com/Softcatala/sinonims-cat)
-  (CC-BY 4.0), compiled into `public/dictionaries/synonyms.json` via `npm run build:synonyms`
-  (not run automatically since it requires network access - see below).
+  ([CC-BY 4.0 terms](LICENSE-SOFTCATALA)), compiled into `public/dictionaries/synonyms.json`
+  via `npm run build:synonyms` (not run automatically since it requires network access - see below).
+- Verb forms: [verbecc](https://github.com/bretttolbert/verbecc) Catalan conjugations
+  ([LGPL-3.0-or-later terms](LICENSE-VERBS)), compiled into `public/dictionaries/verbs.json`;
+  its complete license text is deployed at `public/licenses/verbecc-LGPL-3.0.txt`.
 
 ## License
 
 Copyright © 2026 Albert Puente Encinas. Lletraferit is licensed under the
 [GNU General Public License v3.0 or later](LICENSE). Bundled dictionaries and
-synonym data remain subject to their respective licenses.
+synonym data remain subject to their respective licenses; the Softcatalà synonym
+data uses [CC-BY 4.0](LICENSE-SOFTCATALA), and the bundled verb forms use
+[LGPL-3.0-or-later](LICENSE-VERBS).
 
 ## Getting started
 
@@ -106,11 +111,17 @@ npm run test            # run the engine's unit test suite
 npm run lint            # lint TypeScript and TSX source with oxlint
 npm run preview         # serve the production build locally
 npm run build:synonyms  # optional: (re)generate the synonyms dictionary
+npm run build:verbs     # optional: (re)generate the verb-form index
 ```
 
 `npm install` also runs `postinstall`, which copies the bundled Hunspell dictionaries into
 `public/dictionaries/`. The synonym build fetches the current Softcatalà source, so it needs network
-access; commit its generated JSON and license files when refreshing the bundled data.
+access; commit its generated JSON and updated `LICENSE-SOFTCATALA` when refreshing the bundled data.
+
+`npm run build:verbs` requires Python 3.10 and a local checkout of verbecc at the revision listed in
+`LICENSE-VERBS`. Install its declared Python dependencies in an isolated environment, set
+`VERBECC_PATH` to that checkout, then run the command and commit the refreshed
+`public/dictionaries/verbs.json`.
 
 ## Deployment
 

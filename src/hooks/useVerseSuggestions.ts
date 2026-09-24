@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getVerseSuggestions } from '../suggestions/client'
-import type { VerseSuggestion, VerseSuggestionTarget } from '../suggestions/client'
+import type { CatalanVariant, VerseSuggestion, VerseSuggestionTarget } from '../suggestions/client'
 
 const SUGGESTION_DELAY_MS = 350
 
 /** Builds a non-blocking suggestion query for the verse containing the caret.
  * Only the current stanza is considered, and at most its two preceding verses
  * are used as rhyme/metric models. */
-export function useVerseSuggestions(content: string, activeLine: number, enabled: boolean) {
+export function useVerseSuggestions(content: string, activeLine: number, enabled: boolean, variant: CatalanVariant) {
   const [suggestions, setSuggestions] = useState<VerseSuggestion[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -41,7 +41,7 @@ export function useVerseSuggestions(content: string, activeLine: number, enabled
     let cancelled = false
     setLoading(true)
     const timeout = window.setTimeout(() => {
-      void getVerseSuggestions(query.currentLine, query.targets, query.stanzaLines).then((next) => {
+      void getVerseSuggestions(query.currentLine, query.targets, query.stanzaLines, variant).then((next) => {
         if (cancelled) return
         setSuggestions(next)
         setLoading(false)
@@ -52,7 +52,7 @@ export function useVerseSuggestions(content: string, activeLine: number, enabled
       cancelled = true
       window.clearTimeout(timeout)
     }
-  }, [query])
+  }, [query, variant])
 
   return { suggestions, loading }
 }

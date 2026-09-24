@@ -9,6 +9,26 @@ export interface MetricsPopupProps {
   onClose: () => void
 }
 
+function FootPattern({ pattern }: { pattern: string }) {
+  return (
+    <span className="inline-flex align-middle" aria-label={pattern}>
+      {Array.from(pattern).map((stress, index) => (
+        <span
+          key={index}
+          aria-hidden="true"
+          className={`mx-px inline-block size-2 rounded-full ${stress === '●' ? 'bg-current' : 'border border-current'}`}
+        />
+      ))}
+    </span>
+  )
+}
+
+function renderFootPatterns(explanation: string) {
+  return explanation.split(/([○●]+)/).map((part, index) =>
+    /^[○●]+$/.test(part) ? <FootPattern key={index} pattern={part} /> : part,
+  )
+}
+
 export function MetricsPopup({ x, y, syllableExplanation, rhymeExplanation, feetExplanation, onClose }: MetricsPopupProps) {
   const ref = useRef<HTMLDivElement>(null)
 
@@ -52,7 +72,7 @@ export function MetricsPopup({ x, y, syllableExplanation, rhymeExplanation, feet
       {feetExplanation && (
         <div className="last:mb-0">
           <div className="mb-1 text-[11px] uppercase tracking-wide text-stone-400 dark:text-neutral-500">Peus i ritme</div>
-          <p className="text-xs leading-relaxed text-stone-600 dark:text-neutral-300">{feetExplanation}</p>
+          <p className="text-xs leading-relaxed text-stone-600 dark:text-neutral-300">{renderFootPatterns(feetExplanation)}</p>
         </div>
       )}
     </div>

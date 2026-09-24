@@ -39,7 +39,9 @@ function createBaseTheme(dark: boolean, fontSize: number) {
         backgroundColor: 'transparent',
       },
       '.cm-syllable-gutter': {
-        minWidth: '2.2em',
+        width: '2.8em',
+        minWidth: '2.8em',
+        fontSize: '13px',
         textAlign: 'left',
         color: 'inherit',
         userSelect: 'none',
@@ -53,12 +55,14 @@ function createBaseTheme(dark: boolean, fontSize: number) {
       },
       '.cm-syllable-badge': {
         display: 'inline-grid',
-        gridTemplateColumns: '1.6em auto',
+        boxSizing: 'border-box',
+        width: '2.8em',
+        gridTemplateColumns: '1.5em 0.9em',
         alignItems: 'baseline',
-        columnGap: '0.3em',
+        columnGap: '0.15em',
         fontVariantNumeric: 'tabular-nums',
         fontSize: '13px',
-        paddingLeft: '0.4em',
+        paddingLeft: '0.25em',
       },
       '.cm-syllable-count': {
         textAlign: 'right',

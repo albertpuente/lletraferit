@@ -99,7 +99,7 @@ async function main() {
   const destDir = path.join(root, 'public', 'dictionaries')
   await mkdir(destDir, { recursive: true })
   await writeFile(path.join(destDir, 'synonyms.json'), JSON.stringify(output))
-  await writeFile(path.join(destDir, 'synonyms-license.txt'), license)
+  await writeFile(path.join(root, 'LICENSE-SOFTCATALA'), license)
 
   console.log(
     `[build-synonyms] Wrote ${groups.length} groups, ${index.size} indexed words to public/dictionaries/synonyms.json`,
