@@ -17,8 +17,8 @@ A small, client-only web app for writing poetry in Catalan.
 ### [**Open Lletraferit 🔗**](https://albertpuente.github.io/lletraferit/)
 
 It's a plain-text editor that counts syllables per verse as you type, detects rhyme schemes, flags
-misspelled words, and suggests synonyms. Analysis and document handling run locally in the browser:
-there is no server or account.
+misspelled words, and suggests words that fit a verse's rhyme and meter. Analysis and document
+handling run locally in the browser: there is no server or account.
 
 **Table of contents:**
 - [Features](#features)
@@ -40,8 +40,11 @@ there is no server or account.
   vowel onward) and labelled with the traditional lettering convention (A, B, C…, upper/lowercase
   for art major/menor, an apostrophe for plana endings), scoped per stanza. Selecting a rhyme group
   highlights its matching endings.
+- **Metrical feet and rhythm** - the analysis identifies accentual feet (such as iambs, trochees,
+  dactyls, and anapests), the predominant rhythm, and an indicative alexandrine caesura. This is an
+  advisory reading of the verse and does not change its syllable count.
 - **Click-to-explain metrics** - clicking a line's syllable count or rhyme letter opens a popup
-  explaining exactly how that number or letter was derived.
+  explaining its syllable count, rhyme, and metrical feet.
 - **Poetry reference and examples** - panels provide a guided metrics explanation, well-known
   Catalan forms (sonet, quartets, romanç, haikú, etc.), and bundled real poems to load into the
   editor.
@@ -50,6 +53,10 @@ there is no server or account.
   unrecognized words. Words can be added to a local personal dictionary.
 - **Click-a-word synonyms** - clicking any word looks it up in an offline Catalan thesaurus and
   offers alternatives, which can be inserted with one click.
+- **Rhyme and meter suggestions** - while writing a new verse, an offline worker suggests
+  single-word synonym and verb-form endings that match a preceding verse's phonetic rhyme and
+  metrical syllable count. The typed prefix is highlighted, and suggestions remain available after
+  the verb index has loaded without a network connection.
 - **Local file storage** - the most recently opened, created, or explicitly saved document is
   backed up in IndexedDB and restored on reopening the app. Plain-text poems can be opened from or
   saved directly to disk with the File System Access API, with upload/download fallbacks where that
@@ -73,6 +80,7 @@ src/
                  feeds editor content through the engine on every change.
   spellcheck/    Web Worker + client for offline Hunspell-based Catalan spellchecking.
   synonyms/      Client for the offline Catalan thesaurus (a build-time-compiled JSON index).
+  suggestions/   Web Worker that finds rhyme- and meter-compatible synonym and verb-form endings.
   storage/       IndexedDB backups/settings and File System Access API wrappers.
   structures/    Static reference data for classic Catalan poetic forms.
   hooks/         React hooks tying documents, settings, and theme state together.
